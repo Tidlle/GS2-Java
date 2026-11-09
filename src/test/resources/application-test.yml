@@ -20,5 +20,7 @@ management:
 
 zela:
   ambiente: test
+  fotos:
+    diretorio: target/fotos-teste
   jwt:
     secret: teste-zela-segredo-com-pelo-menos-32-bytes!!

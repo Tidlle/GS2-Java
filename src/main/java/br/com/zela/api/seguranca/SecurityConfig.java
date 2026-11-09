@@ -66,6 +66,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(ROTAS_PUBLICAS).permitAll()
+                        // Fotos: leitura pública (nome aleatório); envio exige login.
+                        .requestMatchers(HttpMethod.GET, "/fotos/*").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(rs -> rs
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(conversor))

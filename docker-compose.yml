@@ -31,3 +31,10 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       RABBITMQ_HOST: rabbitmq
+      FOTOS_DIRETORIO: /app/uploads
+    volumes:
+      # As fotos sobrevivem a reinícios do container.
+      - fotos:/app/uploads
+
+volumes:
+  fotos:

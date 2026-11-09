@@ -5,6 +5,9 @@ spring:
     name: zela-api
   profiles:
     default: dev
+  config:
+    # Lê variáveis locais do arquivo .env (formato CHAVE=valor), se existir. Ele não vai para o Git.
+    import: optional:file:.env[.properties]
   jpa:
     open-in-view: false
     hibernate:
@@ -83,6 +86,9 @@ zela:
   jwt:
     secret: ${JWT_SECRET}
     expiracao-horas: ${JWT_EXPIRACAO_HORAS:8}
+  fotos:
+    # Pasta das fotos enviadas (no container, montar um volume aqui).
+    diretorio: ${FOTOS_DIRETORIO:uploads}
   regras:
     confirmacoes-para-confirmar: 3
     negacoes-para-descartar: 3
