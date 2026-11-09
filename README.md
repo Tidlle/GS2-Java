@@ -176,6 +176,19 @@ No Swagger, faça login em `POST /auth/login`, copie o `token` e cole no botão 
 | Vizinhos negam ("não") | Com 3 "não", `DESCARTADA` e reputação do autor −5 |
 | Votos | Um por pessoa; quem reportou não vota na própria ocorrência |
 
+## Ciclo da ordem de serviço
+
+| # | Etapa | Quem | Controle |
+|---|---|---|---|
+| 1 | **Emitida** | sistema ou gestor | Prazo contratual da categoria (plantão: 4 h) |
+| 2 | **Aceita** ou **recusada** | executor | Recusa exige motivo; o gestor reatribui ou encaminha a outro órgão com protocolo |
+| 3 | **Em execução** | executor | Check-in por GPS a até 100 m do local (senão 422 com a distância) |
+| 4 | **Concluída** | executor | Foto do depois obrigatória |
+| 5 | **Validada** | gestor ou cidadão | Aprovação encerra e resolve a ocorrência; reprovação ou contestação reabre como **retrabalho** (24 h) |
+| 6 | **Encerrada** | sistema | Entra nos indicadores do executor |
+
+Cada passo grava um evento na **timeline** (quem, quando, de qual para qual status e por quê), que é também a trilha de auditoria. O supervisor vê as OS escaladas ou atrasadas, cobra o executor e reatribui.
+
 Os limites ficam em `zela.regras` no `application.yml` (3 confirmações, 3 negações, 4 h de plantão, raio de 2 km).
 
 ## Erros
@@ -229,10 +242,23 @@ Listagens são paginadas: `?page=0&size=20&sort=nome,asc`. Resposta: `{ "content
 | POST | `/ocorrencias/{id}/emitir-os` | gestor | Emite a OS (executor e prazo opcionais) |
 | POST | `/ocorrencias/{id}/encaminhar` | gestor | Encaminha a outro órgão com protocolo |
 | POST | `/ocorrencias/{id}/descartar` | gestor | Descarta com justificativa |
+| GET | `/ordens?status&executorId&bairro&atrasadas` | gestor, supervisor | Painel de OS (paginado, filtros combináveis) |
+| GET | `/ordens/minhas` | executor | OS da minha equipe |
+| GET | `/ordens/{id}` | todos (com posse) | Detalhe com timeline; executor só da equipe, cidadão só das próprias ocorrências |
+| GET | `/ordens/escalonadas` | supervisor, gestor | Escaladas ou com prazo vencido |
+| POST | `/ordens/{id}/aceitar` · `/recusar` | executor | Aceita ou recusa (motivo obrigatório) |
+| POST | `/ordens/{id}/checkin` | executor | Check-in por GPS (até 100 m do local) |
+| POST | `/ordens/{id}/concluir` | executor | Conclui com a foto do depois |
+| POST | `/ordens/{id}/aprovar` · `/reprovar` | gestor | Aprova (encerra) ou reprova (retrabalho) |
+| PATCH | `/ordens/{id}/prazo` | gestor | Novo prazo da etapa |
+| POST | `/ordens/{id}/cancelar` · `/encaminhar` | gestor | Cancela (ocorrência volta às exceções) ou encaminha a outro órgão |
+| POST | `/ordens/{id}/avaliacao` | cidadão (autor) | Confirma ou contesta a solução, com nota opcional |
+| POST | `/ordens/{id}/cobrar` | supervisor | Registra a cobrança na timeline |
+| POST | `/ordens/{id}/reatribuir` | supervisor, gestor | Troca o executor (novo prazo) |
 | GET | `/info` | público | Nome, versão e ambiente da API |
 | GET | `/actuator/health` | público | Health check |
 
-_Ordens de serviço, notificações e indicadores entram nas próximas fases (veja `docs/plano-java.md`)._
+_Fotos e IA, notificações e indicadores entram nas próximas fases (veja `docs/plano-java.md`)._
 
 ---
 
@@ -242,7 +268,7 @@ _Ordens de serviço, notificações e indicadores entram nas próximas fases (ve
 - [x] Fase 2 — domínio e banco (H2; migrações do banco da nuvem quando o DevOps definir)
 - [x] Fase 3 — segurança JWT, tratamento de erros e CRUD de categorias e executores
 - [x] Fase 4 — ocorrências, confirmação dos vizinhos e fila de exceções
-- [ ] Fase 5 — ciclo da ordem de serviço
+- [x] Fase 5 — ciclo da ordem de serviço (executor, gestor, cidadão e supervisor)
 - [ ] Fase 6 — fotos e Spring AI (Gemini)
 - [ ] Fase 7 — RabbitMQ
 - [ ] Fase 8 — prazos e indicadores

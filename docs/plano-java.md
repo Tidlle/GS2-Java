@@ -277,13 +277,15 @@ Commits pequenos e com mensagens claras (o histórico de Git é avaliado no Mobi
 - Obs.: a foto entra como `fotoAntesUrl` (texto); o upload chega na Fase 6
 
 ### Fase 5 · Ciclo da ordem de serviço (12–13/11)
-- [ ] `GET /ordens` (filtros: status, executor, bairro, atrasadas) e `GET /ordens/{id}` com timeline
-- [ ] Executor: `/minhas`, `aceitar`, `recusar` (motivo), `checkin` (raio de 100 m → 422 fora dele), `concluir` (foto)
-- [ ] Gestor: `aprovar`, `reprovar` (retrabalho), `PATCH prazo`, `cancelar`
-- [ ] Cidadão: `avaliacao` (confirma ou contesta → reabre)
-- [ ] Supervisor: `escalonadas`, `cobrar`, `reatribuir`
-- [ ] Checagem de posse (executor só nas próprias OS, cidadão só nas próprias ocorrências)
-- [ ] Teste de integração do fluxo completo: ocorrência → OS → aceite → check-in → conclusão → aprovação
+- [x] `GET /ordens` (filtros: status, executor, bairro, atrasadas) e `GET /ordens/{id}` com timeline
+- [x] Executor: `/minhas`, `aceitar`, `recusar` (motivo), `checkin` (raio de 100 m → 422 fora dele), `concluir` (foto)
+- [x] Gestor: `aprovar`, `reprovar` (retrabalho), `PATCH prazo`, `cancelar`
+- [x] Cidadão: `avaliacao` (confirma ou contesta → reabre)
+- [x] Supervisor: `escalonadas`, `cobrar`, `reatribuir`
+- [x] Checagem de posse (executor só nas próprias OS, cidadão só nas próprias ocorrências)
+- [x] Teste de integração do fluxo completo: ocorrência → OS → aceite → check-in → conclusão → aprovação (97 testes no total)
+- [x] Extra: gestor encaminha OS recusada a outro órgão; cancelamento devolve a ocorrência às exceções
+- Obs.: a confiança da IA na conclusão entra na Fase 6
 
 ### Fase 6 · Fotos e Spring AI com Gemini (13–14/11)
 - [ ] Upload de fotos (tipo e tamanho validados, nome gerado pelo servidor) e `GET /fotos/{arquivo}`
