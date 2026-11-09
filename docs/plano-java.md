@@ -267,13 +267,14 @@ Commits pequenos e com mensagens claras (o histórico de Git é avaliado no Mobi
 - **Pronto quando:** dá para logar no Swagger com os 4 usuários e fazer o CRUD → **avisar o chat de DevOps que já pode montar o pipeline**
 
 ### Fase 4 · Ocorrências (11–12/11)
-- [ ] `POST /ocorrencias` (IA ainda simulada), `PUT` e `DELETE` (só o autor, antes de virar OS)
-- [ ] `GET /ocorrencias` com distância (Haversine), filtros e paginação; `GET /ocorrencias/{id}`, `/minhas`
-- [ ] Confirmação dos vizinhos (`/para-confirmar`, `/confirmacoes`), com voto único, prioridade e reputação
-- [ ] Caminho de urgência (OS direta ao plantão, prazo 4 h)
-- [ ] Emissão automática por categoria; fila de exceções
-- [ ] Gestor: `emitir-os`, `encaminhar` (protocolo), `descartar` (justificativa); `executor-sugerido`
-- [ ] Testes das regras de confirmação, urgência e emissão automática
+- [x] `POST /ocorrencias` (IA ainda simulada), `PUT` e `DELETE` (só o autor, antes de virar OS)
+- [x] `GET /ocorrencias` com distância (Haversine), filtros e paginação; `GET /ocorrencias/{id}`, `/minhas`
+- [x] Confirmação dos vizinhos (`/para-confirmar`, `/confirmacoes`), com voto único, prioridade e reputação
+- [x] Caminho de urgência (OS direta ao plantão, prazo 4 h)
+- [x] Emissão automática por categoria; fila de exceções
+- [x] Gestor: `emitir-os`, `encaminhar` (protocolo), `descartar` (justificativa); `executor-sugerido`
+- [x] Testes das regras de confirmação, urgência e emissão automática (82 testes no total)
+- Obs.: a foto entra como `fotoAntesUrl` (texto); o upload chega na Fase 6
 
 ### Fase 5 · Ciclo da ordem de serviço (12–13/11)
 - [ ] `GET /ordens` (filtros: status, executor, bairro, atrasadas) e `GET /ordens/{id}` com timeline

@@ -164,6 +164,20 @@ Usuario 1──N Notificacao
 
 No Swagger, faça login em `POST /auth/login`, copie o `token` e cole no botão **Authorize**.
 
+## Regras do fluxo de ocorrências
+
+| Situação | Como a API resolve |
+|---|---|
+| Reporte normal | Fica `AGUARDANDO_CONFIRMACAO`; prioridade inicial = risco da categoria |
+| Emergência (`urgente: true`) | Pula a confirmação, prioridade máxima e OS imediata ao executor da categoria com prazo de plantão (4 h) |
+| Vizinho confirma ("sim") | Prioridade +1 e reputação de quem reportou +1. Com 3 "sim", fica `CONFIRMADA` |
+| Confirmada, categoria de rotina | OS emitida automaticamente ao executor do contrato, com o prazo contratual |
+| Confirmada, categoria fora da regra | Vai para a fila de exceções do gestor (emitir, encaminhar ou descartar) |
+| Vizinhos negam ("não") | Com 3 "não", `DESCARTADA` e reputação do autor −5 |
+| Votos | Um por pessoa; quem reportou não vota na própria ocorrência |
+
+Os limites ficam em `zela.regras` no `application.yml` (3 confirmações, 3 negações, 4 h de plantão, raio de 2 km).
+
 ## Erros
 
 Todas as respostas de erro seguem o padrão **ProblemDetail** (RFC 9457), via `@RestControllerAdvice`:
@@ -203,10 +217,22 @@ Listagens são paginadas: `?page=0&size=20&sort=nome,asc`. Resposta: `{ "content
 | POST · PUT · DELETE | `/categorias` · `/categorias/{id}` | gestor | CRUD de categorias |
 | GET | `/executores` · `/executores/{id}` | gestor, supervisor | Lista (paginada, filtro `nome`) e detalhe |
 | POST · PUT · DELETE | `/executores` · `/executores/{id}` | gestor | CRUD de executores |
+| POST | `/ocorrencias` | cidadão | Reporta um problema (urgente: OS imediata ao plantão) |
+| GET | `/ocorrencias?lat&lng&raio&status` | logado | Lista; com posição, só as do raio e da mais próxima para a mais distante (`distanciaM`) |
+| GET | `/ocorrencias/{id}` | logado | Detalhe |
+| GET | `/ocorrencias/minhas` | cidadão | Reportadas por mim |
+| PUT · DELETE | `/ocorrencias/{id}` | cidadão (autor) | Edita ou exclui a própria ocorrência antes de virar OS |
+| GET | `/ocorrencias/para-confirmar` | cidadão | Ocorrências de vizinhos aguardando confirmação |
+| POST | `/ocorrencias/{id}/confirmacoes` | cidadão | "Ainda está aqui?" sim/não |
+| GET | `/ocorrencias/excecoes` | gestor | Fila de exceções (confirmadas sem emissão automática) |
+| GET | `/categorias/{id}/executor-sugerido` | gestor, supervisor | Executor do contrato da categoria |
+| POST | `/ocorrencias/{id}/emitir-os` | gestor | Emite a OS (executor e prazo opcionais) |
+| POST | `/ocorrencias/{id}/encaminhar` | gestor | Encaminha a outro órgão com protocolo |
+| POST | `/ocorrencias/{id}/descartar` | gestor | Descarta com justificativa |
 | GET | `/info` | público | Nome, versão e ambiente da API |
 | GET | `/actuator/health` | público | Health check |
 
-_Ocorrências, ordens de serviço, notificações e indicadores entram nas próximas fases (veja `docs/plano-java.md`)._
+_Ordens de serviço, notificações e indicadores entram nas próximas fases (veja `docs/plano-java.md`)._
 
 ---
 
@@ -215,7 +241,7 @@ _Ocorrências, ordens de serviço, notificações e indicadores entram nas próx
 - [x] Fase 1 — esqueleto do projeto, perfis, Swagger, health check, Docker
 - [x] Fase 2 — domínio e banco (H2; migrações do banco da nuvem quando o DevOps definir)
 - [x] Fase 3 — segurança JWT, tratamento de erros e CRUD de categorias e executores
-- [ ] Fase 4 — ocorrências
+- [x] Fase 4 — ocorrências, confirmação dos vizinhos e fila de exceções
 - [ ] Fase 5 — ciclo da ordem de serviço
 - [ ] Fase 6 — fotos e Spring AI (Gemini)
 - [ ] Fase 7 — RabbitMQ
