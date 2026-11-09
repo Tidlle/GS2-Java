@@ -11,6 +11,12 @@ spring:
   jpa:
     show-sql: false
 
+management:
+  health:
+    # Em dev o RabbitMQ é opcional; o health check não deve ficar DOWN sem ele.
+    rabbit:
+      enabled: false
+
 zela:
   ambiente: ${ZELA_AMBIENTE:dev}
   jwt:
