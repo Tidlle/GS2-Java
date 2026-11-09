@@ -1,0 +1,65 @@
+# Configuração comum a todos os perfis.
+# Valores sensíveis vêm sempre de variáveis de ambiente (veja .env.example).
+spring:
+  application:
+    name: zela-api
+  profiles:
+    default: dev
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+  ai:
+    model:
+      # "none" desliga o cliente do Gemini e usa a IA simulada; "google-genai" liga o Gemini (Fase 6).
+      chat: ${IA_PROVEDOR:none}
+    google:
+      genai:
+        api-key: ${GEMINI_API_KEY:}
+        chat:
+          options:
+            model: ${IA_MODELO:gemini-2.5-flash}
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 10MB
+
+server:
+  port: ${PORT:8080}
+  error:
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  info:
+    env:
+      enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
+zela:
+  ambiente: ${ZELA_AMBIENTE:local}
+  mensagem: Zela — zeladoria colaborativa com IA
+  jwt:
+    secret: ${JWT_SECRET}
+    expiracao-horas: ${JWT_EXPIRACAO_HORAS:8}

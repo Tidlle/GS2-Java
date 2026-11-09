@@ -1,0 +1,18 @@
+# Perfil de desenvolvimento: H2 em memória, console do H2 e segredo de JWT só para uso local.
+spring:
+  datasource:
+    url: jdbc:h2:mem:zela;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    show-sql: false
+
+zela:
+  ambiente: ${ZELA_AMBIENTE:dev}
+  jwt:
+    # Valor fixo apenas para desenvolvimento local. Em produção, JWT_SECRET é obrigatório.
+    secret: ${JWT_SECRET:dev-zela-segredo-local-com-pelo-menos-32-bytes!!}

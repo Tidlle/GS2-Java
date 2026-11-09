@@ -1,0 +1,18 @@
+# Perfil de produção (nuvem). Todas as variáveis abaixo são obrigatórias e vêm do pipeline.
+# O driver e o dialeto do banco serão definidos junto com o chat de DevOps.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  h2:
+    console:
+      enabled: false
+
+springdoc:
+  swagger-ui:
+    # O Swagger fica ativo em produção para a avaliação de Java e Mobile.
+    enabled: true
+
+zela:
+  ambiente: ${ZELA_AMBIENTE:prod}

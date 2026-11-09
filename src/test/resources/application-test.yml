@@ -1,0 +1,24 @@
+# Perfil de testes: roda sem serviços externos (sem RabbitMQ e sem chave de IA),
+# como o pipeline de CI exige.
+spring:
+  datasource:
+    url: jdbc:h2:mem:zela-teste;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false
+  ai:
+    model:
+      chat: none
+
+management:
+  health:
+    rabbit:
+      enabled: false
+
+zela:
+  ambiente: test
+  jwt:
+    secret: teste-zela-segredo-com-pelo-menos-32-bytes!!
