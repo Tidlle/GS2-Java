@@ -4,6 +4,7 @@ import br.com.zela.api.dominio.StatusOcorrencia;
 import br.com.zela.api.servico.ConfirmacaoService;
 import br.com.zela.api.servico.ExcecaoService;
 import br.com.zela.api.servico.OcorrenciaService;
+import br.com.zela.api.servico.TriagemService;
 import br.com.zela.api.web.dto.ConfirmacaoRequisicao;
 import br.com.zela.api.web.dto.EmissaoOSRequisicao;
 import br.com.zela.api.web.dto.EncaminhamentoRequisicao;
@@ -11,6 +12,7 @@ import br.com.zela.api.web.dto.JustificativaRequisicao;
 import br.com.zela.api.web.dto.OcorrenciaEdicao;
 import br.com.zela.api.web.dto.OcorrenciaRequisicao;
 import br.com.zela.api.web.dto.OcorrenciaResposta;
+import br.com.zela.api.web.dto.TriagemResposta;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,6 +26,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -34,7 +37,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "Ocorrências", description = "Reporte do cidadão, confirmação dos vizinhos e fila de exceções do gestor")
 @RestController
@@ -44,12 +49,25 @@ public class OcorrenciaController {
     private final OcorrenciaService ocorrencias;
     private final ConfirmacaoService confirmacoes;
     private final ExcecaoService excecoes;
+    private final TriagemService triagem;
 
     public OcorrenciaController(OcorrenciaService ocorrencias, ConfirmacaoService confirmacoes,
-            ExcecaoService excecoes) {
+            ExcecaoService excecoes, TriagemService triagem) {
         this.ocorrencias = ocorrencias;
         this.confirmacoes = confirmacoes;
         this.excecoes = excecoes;
+        this.triagem = triagem;
+    }
+
+    // ---------- Cidadão: triagem por IA ----------
+
+    @Operation(summary = "Triagem da foto por IA (Gemini)",
+            description = "Multipart com o campo 'arquivo'. Salva a foto e sugere categoria, descrição e urgência; "
+                    + "o app preenche o formulário e o cidadão confirma antes de enviar POST /ocorrencias.")
+    @PostMapping(path = "/triagem", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('CIDADAO')")
+    public TriagemResposta triar(@RequestPart("arquivo") MultipartFile arquivo) {
+        return triagem.triar(arquivo);
     }
 
     // ---------- Cidadão: CRUD ----------

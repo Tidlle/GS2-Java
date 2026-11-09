@@ -15,6 +15,7 @@ import br.com.zela.api.excecao.AcessoNegadoException;
 import br.com.zela.api.excecao.ConflitoException;
 import br.com.zela.api.excecao.RecursoNaoEncontradoException;
 import br.com.zela.api.excecao.RegraNegocioException;
+import br.com.zela.api.ia.Comparacao;
 import br.com.zela.api.repositorio.AvaliacaoRepository;
 import br.com.zela.api.repositorio.OrdemServicoRepository;
 import br.com.zela.api.seguranca.UsuarioLogado;
@@ -26,6 +27,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -50,14 +52,16 @@ public class OrdemServicoService {
     private final ExecutorService executores;
     private final UsuarioLogado logado;
     private final ZelaProperties propriedades;
+    private final TriagemService ia;
 
     public OrdemServicoService(OrdemServicoRepository ordens, AvaliacaoRepository avaliacoes,
-            ExecutorService executores, UsuarioLogado logado, ZelaProperties propriedades) {
+            ExecutorService executores, UsuarioLogado logado, ZelaProperties propriedades, TriagemService ia) {
         this.ordens = ordens;
         this.avaliacoes = avaliacoes;
         this.executores = executores;
         this.logado = logado;
         this.propriedades = propriedades;
+        this.ia = ia;
     }
 
     // ---------- Consultas ----------
@@ -152,14 +156,25 @@ public class OrdemServicoService {
         return OrdemResposta.detalhe(os);
     }
 
-    /** Conclusão com a foto do depois. A comparação antes/depois pela IA entra na Fase 6. */
+    /**
+     * Conclusão com a foto do depois. A IA compara com a foto do antes e grava a confiança de que o problema
+     * foi resolvido (base do aceite tácito). Sem foto do antes ou com a IA fora, a validação fica com pessoas.
+     */
     @Transactional
     public OrdemResposta concluir(Long id, ConclusaoRequisicao req) {
         Usuario executor = logado.usuario();
         OrdemServico os = daEquipe(id, executor);
+        String fotoDepois = req.fotoDepoisUrl().trim();
+        Ocorrencia o = os.getOcorrencia();
+        Optional<Comparacao> comparacao = ia.comparar(o.getFotoAntesUrl(), fotoDepois, o.getDescricao());
+
         os.transicionar(StatusOS.CONCLUIDA, Ator.de(executor), "Foto do depois enviada");
-        os.registrarConclusao(req.fotoDepoisUrl().trim(),
-                StringUtils.hasText(req.observacao()) ? req.observacao().trim() : null, null);
+        os.registrarConclusao(fotoDepois, StringUtils.hasText(req.observacao()) ? req.observacao().trim() : null,
+                comparacao.map(Comparacao::confianca).orElse(null));
+        os.registrarEvento(Ator.sistema("IA (" + ia.origem() + ")"), comparacao
+                .map(c -> "%s com %d%% de confiança. %s".formatted(c.resolvido() ? "Resolvido" : "Não resolvido",
+                        Math.round(c.confianca() * 100), c.observacao() == null ? "" : c.observacao()).trim())
+                .orElse("Comparação antes/depois indisponível; validação pelo gestor ou pelo cidadão"));
         return OrdemResposta.detalhe(os);
     }
 
