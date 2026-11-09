@@ -234,12 +234,14 @@ Commits pequenos e com mensagens claras (o histórico de Git é avaliado no Mobi
 ### Fase 1 · Esqueleto do projeto (09–10/11)
 - [x] Gerar o projeto no Spring Initializr (Java 21, Boot 4.1.2, Maven) com Web, Data JPA, Validation, Security, OAuth2 Resource Server, Actuator, RabbitMQ, Flyway, H2, Lombok, Spring AI Google GenAI
 - [x] Adicionar `springdoc-openapi` e o `build-info` (versão em `/info`)
-- [ ] Pacote base `br.com.zela.api` e a estrutura de pastas da seção 4
-- [ ] `application.yml` com perfis `dev`, `test` e `prod`; tudo sensível em `${VAR}`
-- [ ] Swagger em `/swagger-ui.html`, Actuator `/actuator/health`, `GET /info`
-- [ ] `dockerfiles/Dockerfile` (multi-stage) e `docker-compose.yml` (API + RabbitMQ)
-- [ ] `.gitignore` (inclui `.env`), `.env.example`, README inicial
-- [ ] `git init`, primeiro commit, repositório público no GitHub
+- [x] Pacote base `br.com.zela.api` e a estrutura de pastas da seção 4
+- [x] `application.yml` com perfis `dev`, `test` e `prod`; tudo sensível em `${VAR}`
+- [x] Swagger em `/swagger-ui.html`, Actuator `/actuator/health`, `GET /info`
+- [x] `dockerfiles/Dockerfile` (multi-stage) e `docker-compose.yml` (API + RabbitMQ)
+- [x] `.gitignore` (inclui `.env`), `.env.example`, README inicial
+- [x] `git init` e commits da Fase 1
+- [ ] Repositório público no GitHub (aguardando o grupo criar/autorizar)
+- [ ] Validar `docker compose up` (Docker Desktop não respondeu em 09/11; a API já foi validada com `java -jar`)
 - **Pronto quando:** `docker compose up` sobe a API e o Swagger abre
 
 ### Fase 2 · Domínio e banco (10/11) · *depende do banco escolhido no chat de DevOps*
