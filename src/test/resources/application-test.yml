@@ -2,7 +2,7 @@
 # como o pipeline de CI exige.
 spring:
   datasource:
-    url: jdbc:h2:mem:zela-teste;DB_CLOSE_DELAY=-1
+    url: jdbc:h2:mem:zela-teste;DB_CLOSE_DELAY=-1;TIME ZONE=UTC
     username: sa
     password:
   rabbitmq:

@@ -8,9 +8,19 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
+      # O schema é criado pelo Flyway; o Hibernate só confere se as entidades batem com as tabelas.
       ddl-auto: validate
+    properties:
+      hibernate:
+        # Datas gravadas em UTC numa coluna TIMESTAMP simples (portável entre bancos).
+        jdbc:
+          time_zone: UTC
+        type:
+          preferred_instant_jdbc_type: TIMESTAMP
   flyway:
     enabled: true
+    # Uma pasta por banco: db/migration/h2, db/migration/sqlserver, db/migration/oracle…
+    locations: classpath:db/migration/{vendor}
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
