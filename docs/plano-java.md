@@ -240,7 +240,7 @@ Commits pequenos e com mensagens claras (o histórico de Git é avaliado no Mobi
 - [x] `dockerfiles/Dockerfile` (multi-stage) e `docker-compose.yml` (API + RabbitMQ)
 - [x] `.gitignore` (inclui `.env`), `.env.example`, README inicial
 - [x] `git init` e commits da Fase 1
-- [ ] Repositório público no GitHub (aguardando o grupo criar/autorizar)
+- [x] Repositório público no GitHub: https://github.com/Tidlle/GS2-Java (remote `origin`)
 - [ ] Validar `docker compose up` (Docker Desktop não respondeu em 09/11; a API já foi validada com `java -jar`)
 - **Pronto quando:** `docker compose up` sobe a API e o Swagger abre
 

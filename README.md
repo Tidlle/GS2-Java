@@ -2,6 +2,7 @@
 
 > Global Solution 2026/2 · **CitizenTech** · FIAP · 2º ano ADS · disciplina **Java Advanced**
 > Grupo: _[nome do grupo]_ · Integrantes: _[RM — nome completo — turma]_
+> Repositório: https://github.com/Tidlle/GS2-Java · Deploy: _[link após o pipeline de DevOps]_ · Vídeo pitch: _[link]_
 
 Buracos, postes apagados, entulho e calçadas quebradas ficam meses sem solução: o cidadão não sabe a quem recorrer, a mesma ocorrência é aberta várias vezes e a prefeitura não consegue fiscalizar quem executa o serviço.
 
