@@ -288,14 +288,15 @@ Commits pequenos e com mensagens claras (o histórico de Git é avaliado no Mobi
 - Obs.: a confiança da IA na conclusão entra na Fase 6
 
 ### Fase 6 · Fotos e Spring AI com Gemini (13–14/11)
-- [ ] Upload de fotos (tipo e tamanho validados, nome gerado pelo servidor) e `GET /fotos/{arquivo}`
-- [ ] Interface `ServicoIA` com `Triagem` e `Comparacao` (records)
-- [ ] `SpringAiServico`: Gemini (starter Google GenAI), imagem + saída estruturada; prompt com as categorias do banco
-- [ ] `IaSimulada` para dev, testes e CI (sem chave)
-- [ ] `POST /ocorrencias/triagem` e comparação antes/depois no `concluir` (grava `confiancaIA`)
-- [ ] Falha da IA → ocorrência em `EM_TRIAGEM` (fila de exceções)
-- [ ] Testar com fotos reais (poste, buraco, entulho, calçada, árvore) e registrar os resultados para o README
-- **Pronto quando:** com `GEMINI_API_KEY` definida, uma foto real vira categoria e descrição corretas
+- [x] Upload de fotos (tipo e tamanho validados, nome gerado pelo servidor) e `GET /fotos/{arquivo}`
+- [x] Interface `ServicoIA` com `Triagem` e `Comparacao` (records)
+- [x] `GeminiServicoIA`: Gemini (starter Google GenAI), imagem + saída estruturada; prompt com as categorias do banco
+- [x] `IaSimulada` para dev, testes e CI (sem chave)
+- [x] `POST /ocorrencias/triagem` e comparação antes/depois no `concluir` (grava `confiancaIA`)
+- [x] Falha da IA → a foto fica salva e o cidadão escolhe a categoria; na conclusão, a validação fica com o gestor ou o cidadão
+- [ ] Testar com fotos reais (poste, buraco, entulho, calçada, árvore) e registrar os resultados para o README (falta a chave do Gemini no .env)
+- [x] Ligação com o Gemini conferida com chave falsa: o modelo é criado, o Google recusa e a triagem cai no caminho seguro
+- **Pronto quando:** com `GEMINI_API_KEY` definida, uma foto real vira categoria e descrição corretas (112 testes passando)
 
 ### Fase 7 · RabbitMQ (14/11)
 - [ ] Exchange `zela.eventos`, filas, bindings e DLQ; conversor JSON

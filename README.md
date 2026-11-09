@@ -87,6 +87,7 @@ Copie `.env.example` para `.env` para definir variáveis locais. O `.env` não v
 | `IA_PROVEDOR` | `none` (IA simulada) ou `google-genai` (Gemini) | não |
 | `GEMINI_API_KEY` | Chave da API do Gemini | se `IA_PROVEDOR=google-genai` |
 | `IA_MODELO` | Modelo do Gemini (padrão `gemini-2.5-flash`) | não |
+| `FOTOS_DIRETORIO` | Pasta das fotos enviadas (padrão `uploads`) | não |
 | `ZELA_AMBIENTE` | Nome do ambiente exibido em `/info` | não |
 
 Nenhuma senha ou chave fica no código: os valores de produção vêm das variáveis do pipeline.
@@ -191,6 +192,35 @@ Cada passo grava um evento na **timeline** (quem, quando, de qual para qual stat
 
 Os limites ficam em `zela.regras` no `application.yml` (3 confirmações, 3 negações, 4 h de plantão, raio de 2 km).
 
+## Inteligência artificial (Spring AI + Google Gemini)
+
+A IA faz parte do fluxo, não é um chat solto: a resposta dela **decide o caminho** da ocorrência e da OS.
+
+| Momento | O que a IA faz | Efeito no fluxo |
+|---|---|---|
+| Reporte (`POST /ocorrencias/triagem`) | Recebe a foto e as categorias cadastradas; devolve categoria, descrição padronizada, urgência e confiança | A categoria define o executor do contrato e o prazo; a urgência manda direto ao plantão e mostra 199/193 ao cidadão |
+| Conclusão da OS (`POST /ordens/{id}/concluir`) | Compara a foto do antes com a do depois | Grava `confiancaIA` (0 a 1) e um evento na timeline; alta confiança sem contestação permite o aceite tácito |
+
+**Como funciona:** `ChatClient` do Spring AI com mensagem multimodal (texto + imagem) e **saída estruturada**: o Spring AI acrescenta ao prompt o formato JSON e converte a resposta nos records `Triagem` e `Comparacao`.
+
+**Conferências sobre a resposta da IA:**
+- a categoria precisa ser uma das cadastradas (sem diferenciar acento e maiúsculas); se a IA inventar outra, o cidadão escolhe manualmente;
+- a confiança é limitada a 0 a 1; abaixo de 0,5 o app avisa para conferir;
+- se a IA falhar (sem rede, cota, chave inválida), o reporte continua: a foto fica salva e a decisão passa a ser humana. O motivo vai para o log.
+
+**Ativar o Gemini:** crie um arquivo `.env` na raiz (já está no `.gitignore`) com:
+
+```
+IA_PROVEDOR=google-genai
+GEMINI_API_KEY=sua-chave
+```
+
+Sem isso, a API usa a **IA simulada** (determinística e sem rede), que é a usada nos testes e no CI. Em `POST /ocorrencias/triagem` a resposta traz `origem: "gemini"` ou `"simulada"`.
+
+**Limitações:** a IA vê só a foto (não confirma o local; isso é papel do GPS no check-in); fotos escuras ou de outro ângulo reduzem a confiança; a decisão final pode sempre ser revista pelo gestor ou contestada pelo cidadão.
+
+**Fotos:** o tipo é conferido pelos bytes do arquivo (não pela extensão), o nome é gerado pelo servidor e a leitura só aceita esse formato de nome, o que impede acessar outros arquivos do servidor.
+
 ## Erros
 
 Todas as respostas de erro seguem o padrão **ProblemDetail** (RFC 9457), via `@RestControllerAdvice`:
@@ -230,6 +260,9 @@ Listagens são paginadas: `?page=0&size=20&sort=nome,asc`. Resposta: `{ "content
 | POST · PUT · DELETE | `/categorias` · `/categorias/{id}` | gestor | CRUD de categorias |
 | GET | `/executores` · `/executores/{id}` | gestor, supervisor | Lista (paginada, filtro `nome`) e detalhe |
 | POST · PUT · DELETE | `/executores` · `/executores/{id}` | gestor | CRUD de executores |
+| POST | `/fotos` | cidadão, executor | Envia uma foto (multipart `arquivo`: JPEG, PNG ou WEBP até 8 MB); devolve a URL |
+| GET | `/fotos/{nome}` | público | Baixa a foto (nome aleatório de 32 caracteres) |
+| POST | `/ocorrencias/triagem` | cidadão | **IA**: envia a foto e recebe categoria, descrição e alerta de urgência sugeridos |
 | POST | `/ocorrencias` | cidadão | Reporta um problema (urgente: OS imediata ao plantão) |
 | GET | `/ocorrencias?lat&lng&raio&status` | logado | Lista; com posição, só as do raio e da mais próxima para a mais distante (`distanciaM`) |
 | GET | `/ocorrencias/{id}` | logado | Detalhe |
@@ -258,7 +291,7 @@ Listagens são paginadas: `?page=0&size=20&sort=nome,asc`. Resposta: `{ "content
 | GET | `/info` | público | Nome, versão e ambiente da API |
 | GET | `/actuator/health` | público | Health check |
 
-_Fotos e IA, notificações e indicadores entram nas próximas fases (veja `docs/plano-java.md`)._
+_Notificações e indicadores entram nas próximas fases (veja `docs/plano-java.md`)._
 
 ---
 
@@ -269,7 +302,7 @@ _Fotos e IA, notificações e indicadores entram nas próximas fases (veja `docs
 - [x] Fase 3 — segurança JWT, tratamento de erros e CRUD de categorias e executores
 - [x] Fase 4 — ocorrências, confirmação dos vizinhos e fila de exceções
 - [x] Fase 5 — ciclo da ordem de serviço (executor, gestor, cidadão e supervisor)
-- [ ] Fase 6 — fotos e Spring AI (Gemini)
+- [x] Fase 6 — fotos e Spring AI (Gemini) com triagem e comparação antes/depois
 - [ ] Fase 7 — RabbitMQ
 - [ ] Fase 8 — prazos e indicadores
 - [ ] Fase 9 — qualidade e testes
