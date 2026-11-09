@@ -1,0 +1,33 @@
+# Sobe a Zela API e o RabbitMQ localmente:
+#   docker compose up --build
+# API: http://localhost:8080/swagger-ui.html · RabbitMQ: http://localhost:15672 (guest/guest)
+services:
+  rabbitmq:
+    image: rabbitmq:4.1-management
+    container_name: zela-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile
+    container_name: zela-api
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    # Variáveis opcionais (ex.: GEMINI_API_KEY) ficam no arquivo .env, fora do Git.
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      RABBITMQ_HOST: rabbitmq
