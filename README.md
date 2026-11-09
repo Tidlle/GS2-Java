@@ -116,6 +116,43 @@ Nenhuma senha ou chave fica no código: os valores de produção vêm das variá
 
 ---
 
+## Usuários de teste
+
+Criados pela carga inicial (Flyway `V2`). Senha de todos: **`123456`**.
+
+| Papel | E-mail | Observação |
+|---|---|---|
+| Cidadão | `cidadao@zela.com` | Ana Souza, Vila Mariana |
+| Cidadão | `cidadao2@zela.com` | João Pereira, autor de ocorrências aguardando confirmação |
+| Gestor | `gestor@zela.com` | Carlos Lima, Subprefeitura Vila Mariana |
+| Executor | `executor@zela.com` | Equipe Luz Norte (iluminação) |
+| Supervisor | `supervisor@zela.com` | Marina Costa |
+| Executor | `pavimentacao@zela.com` · `limpeza@zela.com` · `calcadas@zela.com` · `plantao@zela.com` | Um usuário para cada executor |
+
+A carga traz os mesmos cenários do app: 13 ocorrências e 9 ordens de serviço cobrindo os status do ciclo (emitida, aceita, em execução, concluída, reaberta, escalada, encaminhada e encerrada), com a timeline de cada OS.
+
+---
+
+## Modelo de dados
+
+```
+Executor 1──N Categoria          (executor responsável pelo contrato da categoria)
+Executor 1──N Usuario            (usuários do papel EXECUTOR)
+Usuario  1──N Ocorrencia         (autor)
+Categoria 1──N Ocorrencia
+Ocorrencia 1──N Confirmacao N──1 Usuario   (um voto por usuário)
+Ocorrencia 1──N OrdemServico N──1 Executor (ocorrencia.ordemAtual aponta a OS vigente)
+OrdemServico 1──N EventoOS       (timeline e auditoria)
+OrdemServico 1──N Avaliacao N──1 Usuario
+Usuario 1──N Notificacao
+```
+
+- **Máquina de estados:** os enums `StatusOcorrencia` e `StatusOS` definem as transições permitidas. Toda mudança passa por `transicionar(...)`, que recusa transições inválidas e grava o evento na timeline (auditoria: quem, quando, de qual para qual status e por quê).
+- **Localização** (`@Embedded`): latitude e longitude, com distância calculada pela fórmula de Haversine (usada no check-in da OS).
+- **Schema:** criado pelo Flyway (`src/main/resources/db/migration/{banco}`); o Hibernate só valida (`ddl-auto: validate`). Datas gravadas em UTC.
+
+---
+
 ## Endpoints
 
 | Método | Rota | Acesso | Descrição |
@@ -130,7 +167,7 @@ _A lista completa (autenticação, ocorrências, ordens de serviço, indicadores
 ## Andamento
 
 - [x] Fase 1 — esqueleto do projeto, perfis, Swagger, health check, Docker
-- [ ] Fase 2 — domínio e banco
+- [x] Fase 2 — domínio e banco (H2; migrações do banco da nuvem quando o DevOps definir)
 - [ ] Fase 3 — segurança JWT e primeiros CRUDs
 - [ ] Fase 4 — ocorrências
 - [ ] Fase 5 — ciclo da ordem de serviço

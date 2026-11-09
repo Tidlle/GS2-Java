@@ -245,13 +245,14 @@ Commits pequenos e com mensagens claras (o histórico de Git é avaliado no Mobi
 - **Pronto quando:** `docker compose up` sobe a API e o Swagger abre
 
 ### Fase 2 · Domínio e banco (10/11) · *depende do banco escolhido no chat de DevOps*
-- [ ] Enums: `Papel`, `TipoExecutor`, `StatusOcorrencia`, `StatusOS` (com transições permitidas)
-- [ ] Entidades: Usuario, Executor, Categoria, Ocorrencia (`@Embedded Localizacao`), Confirmacao, OrdemServico, EventoOS, Avaliacao, Notificacao
-- [ ] Método `transicionar(...)` na OS e na ocorrência, gravando `EventoOS`
-- [ ] Repositórios Spring Data com consultas filtradas e paginadas
-- [ ] Flyway `V1__schema.sql` e `V2__dados_iniciais.sql` (mesmos dados dos mocks, senhas BCrypt)
-- [ ] `scripts/script-bd.sql` com o DDL
-- [ ] Testes de unidade da máquina de estados
+- [x] Enums: `Papel`, `TipoExecutor`, `StatusOcorrencia`, `StatusOS` (com transições permitidas)
+- [x] Entidades: Usuario, Executor, Categoria, Ocorrencia (`@Embedded Localizacao`), Confirmacao, OrdemServico, EventoOS, Avaliacao, Notificacao
+- [x] Método `transicionar(...)` na OS e na ocorrência, gravando `EventoOS`
+- [x] Repositórios Spring Data (consultas filtradas e paginadas entram com cada fase)
+- [x] Flyway `V1__schema.sql` e `V2__dados_iniciais.sql` em `db/migration/h2` (dados dos mocks corrigidos, 9 usuários, senhas BCrypt)
+- [ ] Migrações do banco da nuvem em `db/migration/{vendor}` (quando o DevOps definir o banco)
+- [ ] `scripts/script-bd.sql` com o DDL do banco da nuvem (quando o DevOps definir o banco)
+- [x] Testes de unidade da máquina de estados, da ocorrência e da distância + teste de mapeamento JPA com a carga inicial (33 testes no total)
 - **Pronto quando:** a API sobe com H2 e os dados de teste aparecem no console do H2
 
 ### Fase 3 · Segurança, erros e primeiros CRUDs (11/11)
