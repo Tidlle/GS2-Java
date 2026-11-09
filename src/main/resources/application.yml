@@ -83,6 +83,12 @@ zela:
   jwt:
     secret: ${JWT_SECRET}
     expiracao-horas: ${JWT_EXPIRACAO_HORAS:8}
+  regras:
+    confirmacoes-para-confirmar: 3
+    negacoes-para-descartar: 3
+    prazo-urgencia-horas: 4
+    raio-padrao-metros: 2000
+    raio-checkin-metros: 100
   cors:
     # Lista separada por vírgula. "*" libera qualquer origem (o token vai no cabeçalho, sem cookies).
     origens: ${CORS_ORIGENS:*}

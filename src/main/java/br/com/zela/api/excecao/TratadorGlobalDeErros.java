@@ -81,6 +81,11 @@ public class TratadorGlobalDeErros extends ResponseEntityExceptionHandler {
                 "Seu papel não tem permissão para esta operação");
     }
 
+    @ExceptionHandler(AcessoNegadoException.class)
+    ProblemDetail semPosse(AcessoNegadoException ex) {
+        return problema(HttpStatus.FORBIDDEN, "acesso-negado", "Acesso negado", ex.getMessage());
+    }
+
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     ProblemDetail tipoInvalido(MethodArgumentTypeMismatchException ex) {
         return problema(HttpStatus.BAD_REQUEST, "validacao", "Dados inválidos",

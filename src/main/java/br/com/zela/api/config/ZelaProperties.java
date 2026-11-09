@@ -19,7 +19,8 @@ public record ZelaProperties(
         @NotBlank String ambiente,
         @NotBlank String mensagem,
         @Valid Jwt jwt,
-        @Valid Cors cors) {
+        @Valid Cors cors,
+        @Valid Regras regras) {
 
     public record Jwt(
             @NotBlank @Size(min = 32, message = "JWT_SECRET precisa ter pelo menos 32 caracteres") String secret,
@@ -28,5 +29,22 @@ public record ZelaProperties(
 
     /** Origens liberadas para chamadas do navegador (app Expo na web). */
     public record Cors(@NotEmpty List<String> origens) {
+    }
+
+    /**
+     * Parâmetros das regras do fluxo, ajustáveis sem mudar código.
+     *
+     * @param confirmacoesParaConfirmar "sim" dos vizinhos para a ocorrência ficar CONFIRMADA
+     * @param negacoesParaDescartar     "não" dos vizinhos para a ocorrência ser DESCARTADA
+     * @param prazoUrgenciaHoras        prazo da OS de plantão no caminho de urgência
+     * @param raioPadraoMetros          raio das buscas por proximidade quando o app não informa
+     * @param raioCheckinMetros         distância máxima do local para o check-in do executor
+     */
+    public record Regras(
+            @Positive int confirmacoesParaConfirmar,
+            @Positive int negacoesParaDescartar,
+            @Positive int prazoUrgenciaHoras,
+            @Positive int raioPadraoMetros,
+            @Positive int raioCheckinMetros) {
     }
 }
