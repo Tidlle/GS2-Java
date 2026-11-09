@@ -44,7 +44,14 @@ class RotasPublicasTest {
 
     @Test
     void rotaNaoPublicaExigeAutenticacao() throws Exception {
-        mvc.perform(get("/ocorrencias"))
-                .andExpect(status().is4xxClientError());
+        mvc.perform(get("/categorias"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void swaggerDocumentaOEsquemaBearer() throws Exception {
+        mvc.perform(get("/v3/api-docs"))
+                .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"))
+                .andExpect(jsonPath("$.paths['/auth/login'].post.security").isEmpty());
     }
 }
