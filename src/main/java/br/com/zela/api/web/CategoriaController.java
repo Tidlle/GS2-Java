@@ -1,8 +1,10 @@
 package br.com.zela.api.web;
 
 import br.com.zela.api.servico.CategoriaService;
+import br.com.zela.api.servico.ExcecaoService;
 import br.com.zela.api.web.dto.CategoriaRequisicao;
 import br.com.zela.api.web.dto.CategoriaResposta;
+import br.com.zela.api.web.dto.ExecutorResposta;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -29,9 +31,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class CategoriaController {
 
     private final CategoriaService categorias;
+    private final ExcecaoService excecoes;
 
-    public CategoriaController(CategoriaService categorias) {
+    public CategoriaController(CategoriaService categorias, ExcecaoService excecoes) {
         this.categorias = categorias;
+        this.excecoes = excecoes;
     }
 
     @Operation(summary = "Lista categorias (paginado)")
@@ -45,6 +49,13 @@ public class CategoriaController {
     @GetMapping("/{id}")
     public CategoriaResposta buscar(@PathVariable Long id) {
         return categorias.buscar(id);
+    }
+
+    @Operation(summary = "Executor sugerido", description = "Executor do contrato da categoria (usado na emissão manual).")
+    @GetMapping("/{id}/executor-sugerido")
+    @PreAuthorize("hasAnyRole('GESTOR', 'SUPERVISOR')")
+    public ExecutorResposta executorSugerido(@PathVariable Long id) {
+        return excecoes.executorSugerido(id);
     }
 
     @Operation(summary = "Cadastra uma categoria")
