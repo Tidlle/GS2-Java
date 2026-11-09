@@ -108,9 +108,11 @@ class OrdemServicoApiTest extends TesteDeApi {
         mvc.perform(como(GESTOR, post("/ordens/1/aprovar")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ENCERRADA"))
-                .andExpect(jsonPath("$.timeline", hasSize(6)))
-                .andExpect(jsonPath("$.timeline[4].statusNovo").value("VALIDADA"))
-                .andExpect(jsonPath("$.timeline[4].usuario").value("Carlos Lima"));
+                // 6 mudanças de status + 1 registro da IA (sem foto do antes: comparação indisponível).
+                .andExpect(jsonPath("$.timeline", hasSize(7)))
+                .andExpect(jsonPath("$.timeline[4].usuario").value("IA (simulada)"))
+                .andExpect(jsonPath("$.timeline[5].statusNovo").value("VALIDADA"))
+                .andExpect(jsonPath("$.timeline[5].usuario").value("Carlos Lima"));
 
         mvc.perform(como(CIDADAO, get("/ocorrencias/1"))).andExpect(jsonPath("$.status").value("RESOLVIDA"));
     }

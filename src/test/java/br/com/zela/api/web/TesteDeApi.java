@@ -10,7 +10,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.AbstractMockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 
 /** Base dos testes de API: sobe a aplicação com H2 e desfaz as alterações de cada teste. */
@@ -40,11 +40,11 @@ abstract class TesteDeApi {
     }
 
     /** Adiciona o cabeçalho Authorization: Bearer com o token do usuário. */
-    MockHttpServletRequestBuilder como(String email, MockHttpServletRequestBuilder req) throws Exception {
+    <B extends AbstractMockHttpServletRequestBuilder<B>> B como(String email, B req) throws Exception {
         return req.header("Authorization", "Bearer " + token(email));
     }
 
-    static MockHttpServletRequestBuilder json(MockHttpServletRequestBuilder req, String corpo) {
+    static <B extends AbstractMockHttpServletRequestBuilder<B>> B json(B req, String corpo) {
         return req.contentType(MediaType.APPLICATION_JSON).content(corpo);
     }
 }
