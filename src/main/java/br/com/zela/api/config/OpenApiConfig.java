@@ -4,6 +4,7 @@ import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +29,8 @@ public class OpenApiConfig {
                                 a IA classifica, os vizinhos confirmam e a prefeitura acompanha a ordem de \
                                 serviço até a solução. GS 2026/2 · CitizenTech · FIAP.""")
                         .contact(new Contact().name("Grupo Zela")))
+                // Todas as rotas exigem JWT, exceto as marcadas com @SecurityRequirements vazio (login, cadastro, info).
+                .addSecurityItem(new SecurityRequirement().addList(ESQUEMA_JWT))
                 .components(new Components()
                         .addSecuritySchemes(ESQUEMA_JWT, new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)

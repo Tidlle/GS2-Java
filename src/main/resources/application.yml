@@ -36,6 +36,16 @@ spring:
         chat:
           options:
             model: ${IA_MODELO:gemini-2.5-flash}
+  data:
+    web:
+      pageable:
+        default-page-size: 20
+        max-page-size: 100
+        # Página em JSON estável: { content: [...], page: { size, number, totalElements, totalPages } }
+        serialization-mode: via-dto
+  mvc:
+    problemdetails:
+      enabled: true
   servlet:
     multipart:
       max-file-size: 8MB
@@ -73,3 +83,6 @@ zela:
   jwt:
     secret: ${JWT_SECRET}
     expiracao-horas: ${JWT_EXPIRACAO_HORAS:8}
+  cors:
+    # Lista separada por vírgula. "*" libera qualquer origem (o token vai no cabeçalho, sem cookies).
+    origens: ${CORS_ORIGENS:*}
