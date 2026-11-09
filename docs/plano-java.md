@@ -256,14 +256,14 @@ Commits pequenos e com mensagens claras (o histórico de Git é avaliado no Mobi
 - **Pronto quando:** a API sobe com H2 e os dados de teste aparecem no console do H2
 
 ### Fase 3 · Segurança, erros e primeiros CRUDs (11/11)
-- [ ] `JwtService` (gerar e validar), `JwtFilter`, `SecurityConfig` stateless, BCrypt
-- [ ] `POST /auth/login`, `POST /auth/cadastro`, `GET /usuarios/me`
-- [ ] `@PreAuthorize` por papel; respostas 401/403 em JSON; CORS para o Expo
-- [ ] `@RestControllerAdvice` com `ProblemDetail` (400, 401, 403, 404, 409, 422)
-- [ ] DTOs `record` com Bean Validation (senha nunca sai na resposta)
-- [ ] **CRUD paginado de Categoria e Executor** (GESTOR)
-- [ ] Swagger com autenticação Bearer
-- [ ] Testes de integração: login, cadastro, 401/403, validação, CRUDs
+- [x] JWT pelo OAuth2 Resource Server (`JwtConfig`, `TokenService`), `SecurityConfig` stateless, BCrypt
+- [x] `POST /auth/login`, `POST /auth/cadastro`, `GET /usuarios/me`
+- [x] `@PreAuthorize` por papel; respostas 401/403 em JSON; CORS para o Expo
+- [x] `@RestControllerAdvice` com `ProblemDetail` (400, 401, 403, 404, 409, 422)
+- [x] DTOs `record` com Bean Validation (senha nunca sai na resposta)
+- [x] **CRUD paginado de Categoria e Executor** (GESTOR)
+- [x] Swagger com autenticação Bearer
+- [x] Testes de integração: login, cadastro, 401/403, validação, CRUDs (60 testes no total)
 - **Pronto quando:** dá para logar no Swagger com os 4 usuários e fazer o CRUD → **avisar o chat de DevOps que já pode montar o pipeline**
 
 ### Fase 4 · Ocorrências (11–12/11)

@@ -82,6 +82,7 @@ Copie `.env.example` para `.env` para definir variáveis locais. O `.env` não v
 | `DB_URL`, `DB_USER`, `DB_PASSWORD` | Conexão com o banco | sim |
 | `JWT_SECRET` | Segredo do JWT (mínimo 32 caracteres) | sim |
 | `JWT_EXPIRACAO_HORAS` | Validade do token (padrão 8) | não |
+| `CORS_ORIGENS` | Origens liberadas para o navegador, separadas por vírgula (padrão `*`) | não |
 | `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD` | Conexão com o RabbitMQ | sim |
 | `IA_PROVEDOR` | `none` (IA simulada) ou `google-genai` (Gemini) | não |
 | `GEMINI_API_KEY` | Chave da API do Gemini | se `IA_PROVEDOR=google-genai` |
@@ -153,14 +154,59 @@ Usuario 1──N Notificacao
 
 ---
 
+## Autenticação (JWT)
+
+1. `POST /auth/login` com e-mail e senha. A senha é conferida com o hash **BCrypt** guardado no banco.
+2. A API devolve um **JWT** assinado com HMAC-SHA256 (segredo `JWT_SECRET`), válido por 8 horas. Claims: `sub` (id do usuário), `papel`, `nome`, `email`.
+3. O app envia `Authorization: Bearer <token>` em todas as chamadas.
+4. O **OAuth2 Resource Server** do Spring Security valida assinatura e validade e transforma o claim `papel` em `ROLE_<PAPEL>`.
+5. Cada endpoint declara quem pode usá-lo com `@PreAuthorize` (ex.: `hasRole('GESTOR')`). Sem token: **401**; papel sem permissão: **403**.
+
+No Swagger, faça login em `POST /auth/login`, copie o `token` e cole no botão **Authorize**.
+
+## Erros
+
+Todas as respostas de erro seguem o padrão **ProblemDetail** (RFC 9457), via `@RestControllerAdvice`:
+
+```json
+{
+  "type": "https://zela.app/erros/validacao",
+  "title": "Dados inválidos",
+  "status": 400,
+  "detail": "Um ou mais campos estão inválidos",
+  "instance": "/categorias",
+  "timestamp": "2026-11-09T23:26:19Z",
+  "erros": [ { "campo": "riscoBase", "mensagem": "O risco base vai de 1 a 5" } ]
+}
+```
+
+| Status | Quando |
+|---|---|
+| 400 | Bean Validation nos DTOs, JSON malformado, parâmetro com tipo errado |
+| 401 | Sem token, token inválido ou expirado, login recusado |
+| 403 | Papel sem permissão |
+| 404 | Recurso inexistente |
+| 409 | Conflito: e-mail ou nome repetido, exclusão de registro em uso, transição de status inválida |
+| 422 | Regra de negócio (ex.: check-in longe do local) |
+| 500 | Erro inesperado (sem detalhes internos; stack trace só no log) |
+
 ## Endpoints
+
+Listagens são paginadas: `?page=0&size=20&sort=nome,asc`. Resposta: `{ "content": [...], "page": { "size", "number", "totalElements", "totalPages" } }`.
 
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
+| POST | `/auth/login` | público | Login; devolve o JWT e os dados do usuário |
+| POST | `/auth/cadastro` | público | Cadastro de cidadão |
+| GET | `/usuarios/me` | logado | Usuário dono do token |
+| GET | `/categorias` · `/categorias/{id}` | logado | Lista (paginada) e detalhe das categorias |
+| POST · PUT · DELETE | `/categorias` · `/categorias/{id}` | gestor | CRUD de categorias |
+| GET | `/executores` · `/executores/{id}` | gestor, supervisor | Lista (paginada, filtro `nome`) e detalhe |
+| POST · PUT · DELETE | `/executores` · `/executores/{id}` | gestor | CRUD de executores |
 | GET | `/info` | público | Nome, versão e ambiente da API |
 | GET | `/actuator/health` | público | Health check |
 
-_A lista completa (autenticação, ocorrências, ordens de serviço, indicadores) entra conforme as fases avançam. Veja `docs/plano-java.md`._
+_Ocorrências, ordens de serviço, notificações e indicadores entram nas próximas fases (veja `docs/plano-java.md`)._
 
 ---
 
@@ -168,7 +214,7 @@ _A lista completa (autenticação, ocorrências, ordens de serviço, indicadores
 
 - [x] Fase 1 — esqueleto do projeto, perfis, Swagger, health check, Docker
 - [x] Fase 2 — domínio e banco (H2; migrações do banco da nuvem quando o DevOps definir)
-- [ ] Fase 3 — segurança JWT e primeiros CRUDs
+- [x] Fase 3 — segurança JWT, tratamento de erros e CRUD de categorias e executores
 - [ ] Fase 4 — ocorrências
 - [ ] Fase 5 — ciclo da ordem de serviço
 - [ ] Fase 6 — fotos e Spring AI (Gemini)
