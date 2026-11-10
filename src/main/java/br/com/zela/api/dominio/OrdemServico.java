@@ -1,5 +1,8 @@
 package br.com.zela.api.dominio;
 
+import br.com.zela.api.dominio.evento.ComEventos;
+import br.com.zela.api.dominio.evento.EventoDominio;
+import br.com.zela.api.dominio.evento.EventosDeDominioListener;
 import br.com.zela.api.excecao.TransicaoInvalidaException;
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
@@ -7,6 +10,7 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -19,6 +23,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -34,9 +39,10 @@ import lombok.NoArgsConstructor;
  */
 @Entity
 @Table(name = "ordens_servico")
+@EntityListeners(EventosDeDominioListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class OrdemServico {
+public class OrdemServico implements ComEventos {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -96,6 +102,13 @@ public class OrdemServico {
     @OrderBy("data ASC, id ASC")
     private List<EventoOS> eventos = new ArrayList<>();
 
+    /** Mudanças de status ainda não publicadas (viram mensagens no RabbitMQ depois do commit). */
+    @Transient
+    private final List<Pendente> pendentes = new ArrayList<>();
+
+    private record Pendente(StatusOS anterior, StatusOS novo, String autor, String detalhe) {
+    }
+
     /** Emite a OS (status EMITIDA) e registra o primeiro evento da timeline. */
     public OrdemServico(Ocorrencia ocorrencia, Executor executor, Duration prazo, Ator ator) {
         this.ocorrencia = ocorrencia;
@@ -103,6 +116,7 @@ public class OrdemServico {
         this.status = StatusOS.EMITIDA;
         this.prazoEtapa = Instant.now().plus(prazo);
         this.eventos.add(new EventoOS(this, null, StatusOS.EMITIDA, ator, null));
+        this.pendentes.add(new Pendente(null, StatusOS.EMITIDA, ator.nome(), null));
     }
 
     /** Muda o status validando o ciclo da OS e registra o evento; lança 409 se a transição não for permitida. */
@@ -111,6 +125,7 @@ public class OrdemServico {
             throw new TransicaoInvalidaException("OS", status, novo);
         }
         eventos.add(new EventoOS(this, status, novo, ator, justificativa));
+        pendentes.add(new Pendente(status, novo, ator.nome(), justificativa));
         status = novo;
         if (novo == StatusOS.CONCLUIDA) {
             concluidaEm = Instant.now();
@@ -157,6 +172,15 @@ public class OrdemServico {
 
     public List<EventoOS> getEventos() {
         return Collections.unmodifiableList(eventos);
+    }
+
+    @Override
+    public List<EventoDominio> retirarEventos() {
+        List<EventoDominio> prontos = pendentes.stream()
+                .map(p -> EventoDominio.daOS(id, ocorrencia.getId(), p.anterior(), p.novo(), p.autor(), p.detalhe()))
+                .toList();
+        pendentes.clear();
+        return prontos;
     }
 
     @PrePersist

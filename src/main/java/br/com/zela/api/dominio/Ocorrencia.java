@@ -1,9 +1,13 @@
 package br.com.zela.api.dominio;
 
+import br.com.zela.api.dominio.evento.ComEventos;
+import br.com.zela.api.dominio.evento.EventoDominio;
+import br.com.zela.api.dominio.evento.EventosDeDominioListener;
 import br.com.zela.api.excecao.TransicaoInvalidaException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
@@ -16,7 +20,10 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,9 +31,10 @@ import lombok.NoArgsConstructor;
 /** Problema reportado pelo cidadão, com foto e localização. Pode virar uma ordem de serviço. */
 @Entity
 @Table(name = "ocorrencias")
+@EntityListeners(EventosDeDominioListener.class)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Ocorrencia {
+public class Ocorrencia implements ComEventos {
 
     public static final int PRIORIDADE_MAXIMA = 5;
 
@@ -99,6 +107,12 @@ public class Ocorrencia {
     @Column(name = "atualizada_em", nullable = false)
     private Instant atualizadaEm;
 
+    @Transient
+    private final List<Pendente> pendentes = new ArrayList<>();
+
+    private record Pendente(StatusOcorrencia anterior, StatusOcorrencia novo, String detalhe) {
+    }
+
     public Ocorrencia(Usuario autor, Categoria categoria, String titulo, String descricao, String bairro,
             String endereco, Localizacao localizacao, String fotoAntesUrl, boolean urgente) {
         this.autor = autor;
@@ -119,7 +133,17 @@ public class Ocorrencia {
         if (!status.podeIrPara(novo)) {
             throw new TransicaoInvalidaException("Ocorrência", status, novo);
         }
+        pendentes.add(new Pendente(status, novo, null));
         status = novo;
+    }
+
+    @Override
+    public List<EventoDominio> retirarEventos() {
+        List<EventoDominio> prontos = pendentes.stream()
+                .map(p -> EventoDominio.daOcorrencia(id, p.anterior(), p.novo(), p.detalhe()))
+                .toList();
+        pendentes.clear();
+        return prontos;
     }
 
     /** Registra o voto de um vizinho; "ainda existe" aumenta a prioridade. */
@@ -154,13 +178,20 @@ public class Ocorrencia {
 
     public void encaminhar(String orgao, String protocolo) {
         transicionar(StatusOcorrencia.ENCAMINHADA);
+        detalharUltimoEvento("%s · protocolo %s".formatted(orgao, protocolo));
         this.orgaoEncaminhado = orgao;
         this.protocoloExterno = protocolo;
     }
 
     public void descartar(String motivo) {
         transicionar(StatusOcorrencia.DESCARTADA);
+        detalharUltimoEvento(motivo);
         this.motivoDescarte = motivo;
+    }
+
+    private void detalharUltimoEvento(String detalhe) {
+        Pendente ultimo = pendentes.removeLast();
+        pendentes.add(new Pendente(ultimo.anterior(), ultimo.novo(), detalhe));
     }
 
     @PrePersist
