@@ -20,6 +20,8 @@ management:
 
 zela:
   ambiente: test
+  mensageria:
+    modo: local
   fotos:
     diretorio: target/fotos-teste
   jwt:

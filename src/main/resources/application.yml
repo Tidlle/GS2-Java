@@ -29,6 +29,15 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        # Até 3 tentativas; depois a mensagem vai para a fila .dlq (não volta para a fila e não trava).
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-retries: 3
+          initial-interval: 1s
+          multiplier: 2
   ai:
     model:
       # "none" desliga o cliente do Gemini e usa a IA simulada; "google-genai" liga o Gemini (Fase 6).
@@ -86,6 +95,10 @@ zela:
   jwt:
     secret: ${JWT_SECRET}
     expiracao-horas: ${JWT_EXPIRACAO_HORAS:8}
+  mensageria:
+    # rabbitmq: eventos vão para o RabbitMQ e são consumidos de forma assíncrona (padrão).
+    # local: processados no mesmo processo, sem broker (testes ou rodar sem Docker).
+    modo: ${MENSAGERIA_MODO:rabbitmq}
   fotos:
     # Pasta das fotos enviadas (no container, montar um volume aqui).
     diretorio: ${FOTOS_DIRETORIO:uploads}
