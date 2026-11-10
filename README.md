@@ -41,11 +41,14 @@ docker compose up --build
 
 ### Opção 2 — Maven
 
-Requisito: JDK 21. O RabbitMQ é opcional nesta fase (só é usado a partir da Fase 7).
+Requisito: JDK 21. Os eventos vão para o RabbitMQ, então suba só ele antes:
 
 ```bash
+docker compose up -d rabbitmq
 ./mvnw spring-boot:run
 ```
+
+Sem Docker, rode com a mensageria local (os eventos são processados no mesmo processo, sem broker): crie um `.env` com `MENSAGERIA_MODO=local`.
 
 No Windows (PowerShell ou cmd), use `mvnw.cmd spring-boot:run`.
 
@@ -88,6 +91,7 @@ Copie `.env.example` para `.env` para definir variáveis locais. O `.env` não v
 | `GEMINI_API_KEY` | Chave da API do Gemini | se `IA_PROVEDOR=google-genai` |
 | `IA_MODELO` | Modelo do Gemini (padrão `gemini-2.5-flash`) | não |
 | `FOTOS_DIRETORIO` | Pasta das fotos enviadas (padrão `uploads`) | não |
+| `MENSAGERIA_MODO` | `rabbitmq` (padrão) ou `local` (sem broker) | não |
 | `ZELA_AMBIENTE` | Nome do ambiente exibido em `/info` | não |
 
 Nenhuma senha ou chave fica no código: os valores de produção vêm das variáveis do pipeline.
@@ -221,6 +225,41 @@ Sem isso, a API usa a **IA simulada** (determinística e sem rede), que é a usa
 
 **Fotos:** o tipo é conferido pelos bytes do arquivo (não pela extensão), o nome é gerado pelo servidor e a leitura só aceita esse formato de nome, o que impede acessar outros arquivos do servidor.
 
+## Mensageria (requisito 5 — opção A: RabbitMQ)
+
+Cada mudança de status de uma OS ou de uma ocorrência vira um **evento** publicado no RabbitMQ e consumido de forma **assíncrona**.
+
+```
+ API (transação)                       RabbitMQ                                   Consumidores
+ ───────────────                       ────────                                   ────────────
+ OS/ocorrência muda de status          exchange zela.eventos (topic)
+   └─ entidade registra o evento ──►   ├─ "os.*", "ocorrencia.*"  ─► zela.notificacoes ─► cria avisos no app
+      (publicado só após o COMMIT)     └─ "os.escalada",          ─► zela.alertas      ─► alerta de urgência
+                                          "ocorrencia.urgente"                            e escalonamento
+                                       falhou 3x ─► zela.eventos.dlx ─► zela.*.dlq
+```
+
+1. A entidade (`OrdemServico`, `Ocorrencia`) registra um **evento de domínio** a cada `transicionar(...)`.
+2. Um listener JPA publica o evento no Spring quando a entidade é gravada.
+3. `PublicadorDeEventos` (`@TransactionalEventListener(AFTER_COMMIT)`) envia ao exchange `zela.eventos` com a chave de roteamento do evento (ex.: `os.escalada`). Se a operação der erro e for desfeita, **nada é publicado**.
+4. `ConsumidoresRabbit` (`@RabbitListener`) recebe as mensagens JSON. A fila de notificações cria os avisos (`GET /notificacoes`); a de alertas registra urgências e escalonamentos.
+5. Mensagem que falha 3 vezes vai para a fila `.dlq` (não se perde e não trava a fila).
+
+| Evento | Quem é avisado |
+|---|---|
+| `os.emitida` | Cidadão ("Sua ocorrência virou OS") e equipe executora ("Nova OS") |
+| `os.recusada` | Gestores |
+| `os.em_execucao` · `os.concluida` | Cidadão ("A equipe chegou" · "Confirme a solução") |
+| `os.reaberta` | Equipe executora (retrabalho) |
+| `os.escalada` | Supervisores e cidadão |
+| `os.encerrada` | Cidadão ("Sua ocorrência foi resolvida") |
+| `ocorrencia.urgente` | Supervisores e gestores |
+| `ocorrencia.confirmada` · `descartada` · `encaminhada` | Cidadão |
+
+**Ver funcionando:** com `docker compose up`, abra o painel em http://localhost:15672 (`guest`/`guest`), aba *Exchanges* → `zela.eventos` e aba *Queues* → `zela.notificacoes`. Faça uma ação no Swagger (ex.: reportar algo urgente) e veja a mensagem passar e o aviso aparecer em `GET /notificacoes`.
+
+**Modo local** (`MENSAGERIA_MODO=local`): mesmos eventos e mesmas regras, processados no mesmo processo. Usado nos testes automatizados (o CI roda sem broker) e para rodar sem Docker.
+
 ## Erros
 
 Todas as respostas de erro seguem o padrão **ProblemDetail** (RFC 9457), via `@RestControllerAdvice`:
@@ -288,10 +327,13 @@ Listagens são paginadas: `?page=0&size=20&sort=nome,asc`. Resposta: `{ "content
 | POST | `/ordens/{id}/avaliacao` | cidadão (autor) | Confirma ou contesta a solução, com nota opcional |
 | POST | `/ordens/{id}/cobrar` | supervisor | Registra a cobrança na timeline |
 | POST | `/ordens/{id}/reatribuir` | supervisor, gestor | Troca o executor (novo prazo) |
+| GET | `/notificacoes` | logado | Meus avisos (paginado, mais recentes primeiro) |
+| GET | `/notificacoes/nao-lidas` | logado | Quantidade de avisos não lidos |
+| POST | `/notificacoes/lidas` | logado | Marca todos como lidos |
 | GET | `/info` | público | Nome, versão e ambiente da API |
 | GET | `/actuator/health` | público | Health check |
 
-_Notificações e indicadores entram nas próximas fases (veja `docs/plano-java.md`)._
+_Indicadores entram na próxima fase (veja `docs/plano-java.md`)._
 
 ---
 
@@ -303,7 +345,7 @@ _Notificações e indicadores entram nas próximas fases (veja `docs/plano-java.
 - [x] Fase 4 — ocorrências, confirmação dos vizinhos e fila de exceções
 - [x] Fase 5 — ciclo da ordem de serviço (executor, gestor, cidadão e supervisor)
 - [x] Fase 6 — fotos e Spring AI (Gemini) com triagem e comparação antes/depois
-- [ ] Fase 7 — RabbitMQ
+- [x] Fase 7 — RabbitMQ: eventos após o commit, filas de notificações e alertas, DLQ
 - [ ] Fase 8 — prazos e indicadores
 - [ ] Fase 9 — qualidade e testes
 - [ ] Fase 10 — integração com o app mobile

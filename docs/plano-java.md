@@ -299,11 +299,12 @@ Commits pequenos e com mensagens claras (o histórico de Git é avaliado no Mobi
 - **Pronto quando:** com `GEMINI_API_KEY` definida, uma foto real vira categoria e descrição corretas (112 testes passando)
 
 ### Fase 7 · RabbitMQ (14/11)
-- [ ] Exchange `zela.eventos`, filas, bindings e DLQ; conversor JSON
-- [ ] Eventos de domínio publicados após o commit (`os.emitida`, `os.status`, `os.escalada`, `ocorrencia.urgente`)
-- [ ] `NotificacaoConsumer` (cria notificações) e `AlertaConsumer` (log de urgência e escalonamento)
-- [ ] `GET /notificacoes` e `POST /notificacoes/lidas`
-- [ ] Testes sem broker (publisher simulado) + teste manual no painel do RabbitMQ (prints para o README)
+- [x] Exchange `zela.eventos`, filas, bindings e DLQ; conversor JSON
+- [x] Eventos de domínio registrados pelas entidades e publicados após o commit (chave `os.<status>` e `ocorrencia.<status>`)
+- [x] `ConsumidoresRabbit`: fila de notificações (cria avisos) e fila de alertas (urgência e escalonamento)
+- [x] `GET /notificacoes` e `POST /notificacoes/lidas`
+- [x] Testes sem broker (modo local, mesmo processador dos consumidores): 121 testes no total
+- [ ] Teste manual com o RabbitMQ real e prints do painel para o README (Docker não respondeu em 09/11)
 
 ### Fase 8 · Prazos e indicadores (15/11)
 - [ ] `@EnableScheduling` com intervalos configuráveis (curtos na demo)
