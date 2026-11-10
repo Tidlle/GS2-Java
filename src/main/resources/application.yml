@@ -70,6 +70,11 @@ server:
     include-stacktrace: never
 
 management:
+  health:
+    # A API continua funcionando sem o RabbitMQ (só os avisos deixam de sair, com erro no log).
+    # Por isso o broker não entra no health check: senão a nuvem reiniciaria o container em loop.
+    rabbit:
+      enabled: false
   endpoints:
     web:
       exposure:

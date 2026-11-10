@@ -16,11 +16,6 @@ spring:
     model:
       chat: none
 
-management:
-  health:
-    rabbit:
-      enabled: false
-
 zela:
   ambiente: test
   mensageria:

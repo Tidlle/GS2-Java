@@ -60,7 +60,8 @@ public class OcorrenciaService {
         String bairro = StringUtils.hasText(autor.getBairro()) ? autor.getBairro() : "Não informado";
 
         Ocorrencia o = new Ocorrencia(autor, categoria, titulo(categoria, endereco), req.descricao().trim(), bairro,
-                endereco, new Localizacao(req.latitude(), req.longitude()), req.fotoAntesUrl(), req.isUrgente());
+                endereco, new Localizacao(req.latitude(), req.longitude()),
+                StringUtils.hasText(req.fotoAntesUrl()) ? req.fotoAntesUrl().trim() : null, req.isUrgente());
         ocorrencias.save(o);
 
         if (o.isUrgente()) {
