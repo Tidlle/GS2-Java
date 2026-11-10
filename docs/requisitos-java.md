@@ -21,7 +21,7 @@
 | 03 | Spring Security + JWT, ≥ 2 papéis, endpoints protegidos por papel | 20 | 4 papéis (CIDADAO, GESTOR, EXECUTOR, SUPERVISOR) com `@PreAuthorize` em cada endpoint, mais conferência de **posse** (executor só nas OS da equipe, cidadão só nas próprias ocorrências). Senhas BCrypt, emissor do token conferido e bloqueio após 5 senhas erradas | `AutenticacaoTest` (token inválido, adulterado e de outro emissor; força bruta), 403 por papel e por posse em todas as classes |
 | 04 | Spring AI integrado ao fluxo (não pode ser chat solto) | 20 | **Triagem**: a foto vira categoria, descrição e urgência, que definem executor, prazo e plantão. **Comparação** antes/depois na conclusão: a confiança da IA alimenta o **aceite tácito**. A resposta da IA é conferida (categoria existente, confiança de 0 a 1) e, se a IA falhar, a decisão passa para uma pessoa | `GeminiServicoIATest` (prompt com imagem e conversão da resposta), `TriagemServiceTest`, `FotoEIaApiTest`, `PrazoApiTest` (aceite tácito) |
 | 05 | Arquitetura distribuída — **opção A: RabbitMQ** (evento publicado e consumido de forma assíncrona) | 20 | Eventos de domínio publicados no exchange `zela.eventos` **depois do commit**. Duas filas com consumidores `@RabbitListener` (notificações e alertas), 3 tentativas e DLQ | `RabbitConfigTest` (topologia), `PublicadorDeEventosTest` (exchange, chave, broker fora do ar), `NotificacaoEventosTest` (evento vira aviso só após o commit) |
-| 06 | Swagger/OpenAPI, README de como rodar, API consumida pelo app Mobile | 10 | springdoc em `/swagger-ui.html` com Bearer e descrições. README com como rodar, usuários de teste, endpoints, opção do requisito 5 e declaração de IA. DTOs com os mesmos campos dos tipos do app (`zela/src/types`) | `RotasPublicasTest` (OpenAPI e esquema Bearer). **Integração do app: Fase 10** |
+| 06 | Swagger/OpenAPI, README de como rodar, API consumida pelo app Mobile | 10 | springdoc em `/swagger-ui.html` com Bearer e descrições. README com como rodar, usuários de teste, endpoints, opção do requisito 5 e declaração de IA. DTOs com os mesmos campos dos tipos do app (`zela/src/types`) | `RotasPublicasTest` (OpenAPI e esquema Bearer). App consumindo a API: Fase 10 (primeira versão, testada na web) |
 
 ## O que tira pontos
 
@@ -64,4 +64,4 @@
 - Testar a IA com a chave real do Gemini e registrar os resultados com fotos reais.
 - Testar com o RabbitMQ real (Docker) e tirar prints do painel.
 - Criar as migrações e o `scripts/script-bd.sql` do banco da nuvem, quando o chat de DevOps definir o banco.
-- Fase 10: o app Mobile consumir a API.
+- Fase 10 (app Mobile): revisitar GPS real, URL da nuvem, teste no celular e commits do app.

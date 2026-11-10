@@ -391,7 +391,7 @@ A conferência item a item (requisitos, descontos, segurança e roteiro da apres
 - [x] Fase 7 — RabbitMQ: eventos após o commit, filas de notificações e alertas, DLQ
 - [x] Fase 8 — prazos automáticos (24 h, escalonamento, aceite tácito) e indicadores
 - [x] Fase 9 — revisão dos requisitos e de segurança, cobertura de testes e coleção Postman
-- [ ] Fase 10 — integração com o app mobile
+- [x] Fase 10 — integração com o app mobile (primeira versão; será revisitada)
 - [ ] Fase 11 — documentação e entrega
 
 ---

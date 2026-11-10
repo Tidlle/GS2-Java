@@ -323,13 +323,21 @@ Commits pequenos e com mensagens claras (o histórico de Git é avaliado no Mobi
 - [x] Extras: emissor do JWT conferido, bloqueio de login após 5 erros (429), cobertura com JaCoCo (93% das linhas, 135 testes), `docs/requisitos-java.md`
 - [x] Perfil `prod` testado: sem `JWT_SECRET` não sobe; console do H2 desligado; RabbitMQ fora do health check
 
-### Fase 10 · Integração com o app Mobile (16–17/11) · *em `Ideia_GS2/zela`*
-- [ ] Instalar o Axios e criar o cliente com `baseURL` configurável e o token JWT no cabeçalho
-- [ ] Trocar o login fictício pelo `/auth/login` e `/auth/cadastro` reais
-- [ ] Reescrever o corpo das funções de `src/services/` chamando a API (telas iguais)
-- [ ] Upload da foto (multipart) na nova ocorrência e na conclusão da OS
-- [ ] Tratar erros da API (mensagens e loaders já existem nas telas)
-- [ ] Testar o roteiro de demonstração inteiro contra a API publicada na Azure
+### Fase 10 · Integração com o app Mobile (16–17/11) · *em `Ideia_GS2/zela`* · **primeira versão — vamos revisitar depois**
+- [x] Cliente HTTP com **fetch** (sem dependência nova; o Mobile aceita Axios ou Fetch), JWT no cabeçalho e `EXPO_PUBLIC_API_URL` configurável
+- [x] Login e cadastro reais; token salvo no AsyncStorage; 401 faz logout
+- [x] Corpo de `src/services/` trocado por chamadas à API; mocks e atraso simulado removidos; `store.ts` virou cache do que a API devolve
+- [x] Upload de foto (multipart) na triagem por IA e na conclusão da OS; a confiança da IA vem da API
+- [x] Erros da API viram mensagens nas ações (antes várias telas não tratavam erro)
+- [x] API: resumo da ocorrência na OS passou a trazer `categoriaId`
+- [x] Testado na web contra a API: login dos 4 papéis, lista por distância, confirmar solução (timeline da API), executor aceitar OS, painel e executores do gestor
+- **Revisitar depois** (combinado com o grupo):
+  - [ ] Usar o GPS real do cidadão nas buscas por proximidade (hoje: centro fixo em Vila Mariana)
+  - [ ] Apontar `EXPO_PUBLIC_API_URL` para a URL do deploy na Azure e testar num celular com Expo Go
+  - [ ] Testar o fluxo completo com fotos reais no celular (triagem e conclusão) e o tempo de resposta do Gemini
+  - [ ] Revisar as telas que ainda leem o cache `db` (cards, exceções, escalonamentos) e o carregamento dos catálogos
+  - [ ] Corrigir os 4 erros de tipagem de rotas do Expo Router que já existiam (`npx tsc --noEmit`)
+  - [ ] Commits do app: as mudanças estão no `Ideia_GS2/zela`, ainda sem commit, junto com alterações anteriores do grupo
 
 ### Fase 11 · Documentação e entrega (17–19/11)
 - [ ] README completo (seção 12), testado do zero numa pasta limpa
