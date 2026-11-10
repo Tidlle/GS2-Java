@@ -115,6 +115,18 @@ class OrdemServicoTest {
     }
 
     @Test
+    void cadaMudancaDeStatusGeraUmEventoDeDominioPublicadoUmaVez() {
+        os.transicionar(StatusOS.ACEITA, executor, null);
+        os.registrarEvento(gestor, "Prazo alterado"); // sem mudança de status: não vira mensagem
+        os.transicionar(StatusOS.EM_EXECUCAO, executor, "Check-in a 8 m do local");
+
+        assertThat(os.retirarEventos()).extracting(e -> e.tipo() + "|" + e.anterior() + "|" + e.detalhe())
+                .containsExactly("os.emitida|null|null", "os.aceita|EMITIDA|null",
+                        "os.em_execucao|ACEITA|Check-in a 8 m do local");
+        assertThat(os.retirarEventos()).isEmpty();
+    }
+
+    @Test
     void timelineNaoPodeSerAlteradaDeFora() {
         assertThatThrownBy(() -> os.getEventos().clear()).isInstanceOf(UnsupportedOperationException.class);
     }
