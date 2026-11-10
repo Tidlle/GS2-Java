@@ -7,9 +7,50 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import javax.crypto.spec.SecretKeySpec;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwsHeader;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
 class AutenticacaoTest extends TesteDeApi {
+
+    @Test
+    void bloqueiaDepoisDeCincoSenhasErradas() throws Exception {
+        mvc.perform(json(post("/auth/cadastro"), """
+                        {"nome": "Teste Força Bruta", "email": "forca@bruta.com", "senha": "certa123", "bairro": "Saúde"}"""))
+                .andExpect(status().isCreated());
+        for (int i = 0; i < 5; i++) {
+            mvc.perform(json(post("/auth/login"), """
+                            {"email": "forca@bruta.com", "senha": "errada"}"""))
+                    .andExpect(status().isUnauthorized());
+        }
+        // Mesmo com a senha certa, o e-mail fica bloqueado durante a janela de 15 minutos.
+        mvc.perform(json(post("/auth/login"), """
+                        {"email": "FORCA@bruta.com", "senha": "certa123"}"""))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.title").value("Muitas tentativas"));
+    }
+
+    @Test
+    void tokenDeOutroEmissorDa401() throws Exception {
+        // Assinado com o mesmo segredo, mas com outro "iss": precisa ser recusado.
+        var chave = new SecretKeySpec(
+                "teste-zela-segredo-com-pelo-menos-32-bytes!!".getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        var claims = JwtClaimsSet.builder()
+                .issuer("outro-sistema").subject("2").claim("papel", "GESTOR")
+                .issuedAt(Instant.now()).expiresAt(Instant.now().plusSeconds(600)).build();
+        String token = new NimbusJwtEncoder(new ImmutableSecret<>(chave))
+                .encode(JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims))
+                .getTokenValue();
+        mvc.perform(get("/usuarios/me").header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
+    }
 
     @Test
     void loginDevolveTokenEUsuarioSemSenha() throws Exception {

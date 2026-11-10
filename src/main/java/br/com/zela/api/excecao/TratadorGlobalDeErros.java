@@ -69,6 +69,11 @@ public class TratadorGlobalDeErros extends ResponseEntityExceptionHandler {
         return problema(HttpStatus.UNAUTHORIZED, "nao-autenticado", "Não autenticado", ex.getMessage());
     }
 
+    @ExceptionHandler(MuitasTentativasException.class)
+    ProblemDetail muitasTentativas(MuitasTentativasException ex) {
+        return problema(HttpStatus.TOO_MANY_REQUESTS, "muitas-tentativas", "Muitas tentativas", ex.getMessage());
+    }
+
     @ExceptionHandler(AuthenticationException.class)
     ProblemDetail naoAutenticado(AuthenticationException ex) {
         return problema(HttpStatus.UNAUTHORIZED, "nao-autenticado", "Não autenticado",

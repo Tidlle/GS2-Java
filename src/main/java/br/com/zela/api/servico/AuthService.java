@@ -4,6 +4,7 @@ import br.com.zela.api.dominio.Usuario;
 import br.com.zela.api.excecao.ConflitoException;
 import br.com.zela.api.excecao.CredenciaisInvalidasException;
 import br.com.zela.api.repositorio.UsuarioRepository;
+import br.com.zela.api.seguranca.LimiteDeTentativasDeLogin;
 import br.com.zela.api.seguranca.TokenService;
 import br.com.zela.api.seguranca.TokenService.TokenGerado;
 import br.com.zela.api.web.dto.CadastroRequisicao;
@@ -21,19 +22,32 @@ public class AuthService {
     private final UsuarioRepository usuarios;
     private final PasswordEncoder senhas;
     private final TokenService tokens;
+    private final LimiteDeTentativasDeLogin tentativas;
 
-    public AuthService(UsuarioRepository usuarios, PasswordEncoder senhas, TokenService tokens) {
+    public AuthService(UsuarioRepository usuarios, PasswordEncoder senhas, TokenService tokens,
+            LimiteDeTentativasDeLogin tentativas) {
         this.usuarios = usuarios;
         this.senhas = senhas;
         this.tokens = tokens;
+        this.tentativas = tentativas;
     }
 
-    /** Confere e-mail e senha (hash BCrypt) e devolve um JWT. Mensagem única para não revelar se o e-mail existe. */
+    /**
+     * Confere e-mail e senha (hash BCrypt) e devolve um JWT. Mensagem única para não revelar se o e-mail existe.
+     * Depois de 5 erros seguidos para o mesmo e-mail, bloqueia por 15 minutos (429).
+     */
     @Transactional(readOnly = true)
     public LoginResposta login(LoginRequisicao req) {
-        Usuario usuario = usuarios.findByEmailIgnoreCase(req.email().trim())
+        String email = req.email().trim();
+        tentativas.verificar(email);
+        Usuario usuario = usuarios.findByEmailIgnoreCase(email)
                 .filter(u -> senhas.matches(req.senha(), u.getSenhaHash()))
-                .orElseThrow(CredenciaisInvalidasException::new);
+                .orElse(null);
+        if (usuario == null) {
+            tentativas.registrarFalha(email);
+            throw new CredenciaisInvalidasException();
+        }
+        tentativas.registrarSucesso(email);
         TokenGerado token = tokens.gerar(usuario);
         return LoginResposta.bearer(token.valor(), token.expiraEm(), UsuarioResposta.de(usuario));
     }
