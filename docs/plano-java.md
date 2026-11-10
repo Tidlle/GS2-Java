@@ -316,10 +316,12 @@ Commits pequenos e com mensagens claras (o histórico de Git é avaliado no Mobi
 - [x] Extra: `POST /prazos/executar` para a demonstração e histórico de demonstração (`db/demo`) para os indicadores
 
 ### Fase 9 · Qualidade e testes (15–16/11)
-- [ ] Revisar a cobertura dos requisitos 01–06 de Java item por item (seção 1.1)
-- [ ] Completar testes de integração faltantes; `./mvnw verify` gera os relatórios JUnit para o CI
-- [ ] Revisão de segurança: nenhum segredo no código, nenhuma senha em resposta, posse checada em todos os endpoints
-- [ ] Coleção Postman com login e as rotas principais por papel
+- [x] Revisar a cobertura dos requisitos 01–06 de Java item por item (seção 1.1)
+- [x] Completar testes de integração faltantes; `./mvnw verify` gera os relatórios JUnit para o CI
+- [x] Revisão de segurança: nenhum segredo no código, nenhuma senha em resposta, posse checada em todos os endpoints
+- [x] Coleção Postman com login e as rotas principais por papel
+- [x] Extras: emissor do JWT conferido, bloqueio de login após 5 erros (429), cobertura com JaCoCo (93% das linhas, 135 testes), `docs/requisitos-java.md`
+- [x] Perfil `prod` testado: sem `JWT_SECRET` não sobe; console do H2 desligado; RabbitMQ fora do health check
 
 ### Fase 10 · Integração com o app Mobile (16–17/11) · *em `Ideia_GS2/zela`*
 - [ ] Instalar o Axios e criar o cliente com `baseURL` configurável e o token JWT no cabeçalho

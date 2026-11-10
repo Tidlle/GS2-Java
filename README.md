@@ -59,7 +59,7 @@ No Windows (PowerShell ou cmd), use `mvnw.cmd spring-boot:run`.
 | Swagger UI | http://localhost:8080/swagger-ui.html |
 | OpenAPI (JSON) | http://localhost:8080/v3/api-docs |
 | Informações da API | http://localhost:8080/info |
-| Health check | http://localhost:8080/actuator/health |
+| Health check | http://localhost:8080/actuator/health (banco e disco; o RabbitMQ fica de fora porque a API funciona sem ele) |
 | Console do H2 (dev) | http://localhost:8080/h2-console · JDBC URL `jdbc:h2:mem:zela` · usuário `sa`, sem senha |
 | Painel do RabbitMQ | http://localhost:15672 · `guest` / `guest` |
 
@@ -69,7 +69,14 @@ No Windows (PowerShell ou cmd), use `mvnw.cmd spring-boot:run`.
 ./mvnw verify
 ```
 
-Os testes usam o perfil `test` e rodam **sem RabbitMQ e sem chave de IA**, como o pipeline de CI exige. Os relatórios JUnit ficam em `target/surefire-reports`.
+Os testes usam o perfil `test` e rodam **sem RabbitMQ e sem chave de IA**, como o pipeline de CI exige.
+
+- **135 testes** (unidade e integração com MockMvc): regras de domínio, segurança por papel e por posse, validações, CRUDs, fluxo completo da OS, IA, mensageria, prazos e indicadores.
+- Relatórios JUnit: `target/surefire-reports`. Cobertura (JaCoCo, **93% das linhas**): `target/site/jacoco/index.html` (e `jacoco.xml` para o CI).
+
+### Postman
+
+`postman/zela-api.postman_collection.json` tem 58 requisições em 6 pastas. Rode primeiro a pasta **1. Autenticação**: ela guarda o token de cada papel e as demais já usam o certo. Os ids criados (categoria, executor, ocorrência) também ficam em variáveis. A coleção é gerada por `docs/ferramentas/gerar_postman.py`.
 
 ---
 
@@ -170,6 +177,8 @@ Usuario 1──N Notificacao
 5. Cada endpoint declara quem pode usá-lo com `@PreAuthorize` (ex.: `hasRole('GESTOR')`). Sem token: **401**; papel sem permissão: **403**.
 
 No Swagger, faça login em `POST /auth/login`, copie o `token` e cole no botão **Authorize**.
+
+Proteções extras: o emissor (`iss`) do token é conferido e, depois de 5 senhas erradas para o mesmo e-mail, o login fica bloqueado por 15 minutos (429).
 
 ## Regras do fluxo de ocorrências
 
@@ -305,11 +314,12 @@ Todas as respostas de erro seguem o padrão **ProblemDetail** (RFC 9457), via `@
 | Status | Quando |
 |---|---|
 | 400 | Bean Validation nos DTOs, JSON malformado, parâmetro com tipo errado |
-| 401 | Sem token, token inválido ou expirado, login recusado |
+| 401 | Sem token, token inválido, expirado ou de outro emissor, login recusado |
 | 403 | Papel sem permissão |
 | 404 | Recurso inexistente |
 | 409 | Conflito: e-mail ou nome repetido, exclusão de registro em uso, transição de status inválida |
 | 422 | Regra de negócio (ex.: check-in longe do local) |
+| 429 | Login bloqueado por 15 minutos após 5 senhas erradas |
 | 500 | Erro inesperado (sem detalhes internos; stack trace só no log) |
 
 ## Endpoints
@@ -366,6 +376,10 @@ Listagens são paginadas: `?page=0&size=20&sort=nome,asc`. Resposta: `{ "content
 
 ---
 
+## Requisitos de Java
+
+A conferência item a item (requisitos, descontos, segurança e roteiro da apresentação) está em [`docs/requisitos-java.md`](docs/requisitos-java.md).
+
 ## Andamento
 
 - [x] Fase 1 — esqueleto do projeto, perfis, Swagger, health check, Docker
@@ -376,7 +390,7 @@ Listagens são paginadas: `?page=0&size=20&sort=nome,asc`. Resposta: `{ "content
 - [x] Fase 6 — fotos e Spring AI (Gemini) com triagem e comparação antes/depois
 - [x] Fase 7 — RabbitMQ: eventos após o commit, filas de notificações e alertas, DLQ
 - [x] Fase 8 — prazos automáticos (24 h, escalonamento, aceite tácito) e indicadores
-- [ ] Fase 9 — qualidade e testes
+- [x] Fase 9 — revisão dos requisitos e de segurança, cobertura de testes e coleção Postman
 - [ ] Fase 10 — integração com o app mobile
 - [ ] Fase 11 — documentação e entrega
 
