@@ -5,6 +5,9 @@ spring:
     url: jdbc:h2:mem:zela-teste;DB_CLOSE_DELAY=-1;TIME ZONE=UTC
     username: sa
     password:
+  flyway:
+    # Sem o histórico de demonstração: os testes conferem números exatos da carga inicial.
+    locations: classpath:db/migration/{vendor}
   rabbitmq:
     listener:
       simple:
@@ -22,6 +25,9 @@ zela:
   ambiente: test
   mensageria:
     modo: local
+  agendamento:
+    # Nos testes os ciclos de prazo são disparados pelo endpoint, nunca pelo relógio.
+    habilitado: false
   fotos:
     diretorio: target/fotos-teste
   jwt:

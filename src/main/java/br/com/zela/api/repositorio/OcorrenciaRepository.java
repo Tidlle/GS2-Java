@@ -2,6 +2,7 @@ package br.com.zela.api.repositorio;
 
 import br.com.zela.api.dominio.Ocorrencia;
 import br.com.zela.api.dominio.StatusOcorrencia;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -46,6 +47,17 @@ public interface OcorrenciaRepository extends JpaRepository<Ocorrencia, Long> {
             order by o.criadaEm desc
             """)
     List<Ocorrencia> paraConfirmar(@Param("usuarioId") Long usuarioId);
+
+    /** Por bairro: [bairro, quantidade de ocorrências]. */
+    @Query("select o.bairro, count(o) from Ocorrencia o group by o.bairro")
+    List<Object[]> contagemPorBairro();
+
+    /** Aguardando confirmação há mais tempo que o limite (seguem sozinhas: a confirmação nunca bloqueia). */
+    @Query("""
+            select o.id from Ocorrencia o
+            where o.status = br.com.zela.api.dominio.StatusOcorrencia.AGUARDANDO_CONFIRMACAO and o.criadaEm < :limite
+            """)
+    List<Long> idsAguardandoDesde(@Param("limite") Instant limite);
 
     /** Fila de exceções do gestor: confirmadas (ou em triagem) sem OS e fora do caminho de urgência. */
     @Query(value = """

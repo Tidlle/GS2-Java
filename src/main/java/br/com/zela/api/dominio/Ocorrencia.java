@@ -189,6 +189,12 @@ public class Ocorrencia implements ComEventos {
         this.motivoDescarte = motivo;
     }
 
+    /** Sem resposta dos vizinhos no prazo: segue o fluxo como confirmada (a confirmação acelera, não bloqueia). */
+    public void seguirSemConfirmacao(String motivo) {
+        transicionar(StatusOcorrencia.CONFIRMADA);
+        detalharUltimoEvento(motivo);
+    }
+
     private void detalharUltimoEvento(String detalhe) {
         Pendente ultimo = pendentes.removeLast();
         pendentes.add(new Pendente(ultimo.anterior(), ultimo.novo(), detalhe));

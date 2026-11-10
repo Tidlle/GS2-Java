@@ -23,7 +23,8 @@ spring:
   flyway:
     enabled: true
     # Uma pasta por banco: db/migration/h2, db/migration/sqlserver, db/migration/oracle…
-    locations: classpath:db/migration/{vendor}
+    # db/demo traz o histórico de OS encerradas usado nos indicadores (os testes não carregam).
+    locations: classpath:db/migration/{vendor},classpath:db/demo/{vendor}
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
@@ -108,6 +109,14 @@ zela:
     prazo-urgencia-horas: 4
     raio-padrao-metros: 2000
     raio-checkin-metros: 100
+    horas-sem-confirmacao: 24
+    horas-aceite-tacito: 48
+    confianca-aceite-tacito: 0.8
+  agendamento:
+    # Liga a verificação periódica de prazos (confirmação em 24 h, escalonamento, aceite tácito).
+    habilitado: ${AGENDAMENTO_HABILITADO:true}
+    # Intervalo entre verificações (ISO-8601: PT5M = 5 minutos). Na demo, PT1M.
+    intervalo: ${AGENDAMENTO_INTERVALO:PT5M}
   cors:
     # Lista separada por vírgula. "*" libera qualquer origem (o token vai no cabeçalho, sem cookies).
     origens: ${CORS_ORIGENS:*}

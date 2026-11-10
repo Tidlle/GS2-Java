@@ -1,6 +1,8 @@
 package br.com.zela.api.config;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
@@ -39,12 +41,18 @@ public record ZelaProperties(
      * @param prazoUrgenciaHoras        prazo da OS de plantão no caminho de urgência
      * @param raioPadraoMetros          raio das buscas por proximidade quando o app não informa
      * @param raioCheckinMetros         distância máxima do local para o check-in do executor
+     * @param horasSemConfirmacao       sem resposta dos vizinhos nesse tempo, a ocorrência segue sozinha
+     * @param horasAceiteTacito         OS concluída sem contestação nesse tempo pode ser aceita tacitamente
+     * @param confiancaAceiteTacito     confiança mínima da IA (0 a 1) para o aceite tácito
      */
     public record Regras(
             @Positive int confirmacoesParaConfirmar,
             @Positive int negacoesParaDescartar,
             @Positive int prazoUrgenciaHoras,
             @Positive int raioPadraoMetros,
-            @Positive int raioCheckinMetros) {
+            @Positive int raioCheckinMetros,
+            @Positive int horasSemConfirmacao,
+            @Positive int horasAceiteTacito,
+            @DecimalMin("0") @DecimalMax("1") double confiancaAceiteTacito) {
     }
 }

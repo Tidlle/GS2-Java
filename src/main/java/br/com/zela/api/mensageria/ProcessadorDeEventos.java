@@ -91,8 +91,9 @@ public class ProcessadorDeEventos {
                 coordenacao.addAll(comPapel(Papel.GESTOR));
                 avisos.add(new Aviso(coordenacao, "URGENTE: %s. OS enviada ao plantão.".formatted(o.getTitulo())));
             }
-            case "ocorrencia.confirmada" -> avisos.add(new Aviso(List.of(autor),
-                    "Seus vizinhos confirmaram o problema %s.".formatted(titulo)));
+            case "ocorrencia.confirmada" -> avisos.add(new Aviso(List.of(autor), e.detalhe() == null
+                    ? "Seus vizinhos confirmaram o problema %s.".formatted(titulo)
+                    : "Sua ocorrência %s seguiu para atendimento: %s.".formatted(titulo, e.detalhe())));
             case "ocorrencia.descartada" -> avisos.add(new Aviso(List.of(autor),
                     "Sua ocorrência %s foi descartada: %s.".formatted(titulo, e.detalhe())));
             case "ocorrencia.encaminhada" -> avisos.add(new Aviso(List.of(autor),

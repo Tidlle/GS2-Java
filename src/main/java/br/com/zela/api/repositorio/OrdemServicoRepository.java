@@ -33,6 +33,24 @@ public interface OrdemServicoRepository extends JpaRepository<OrdemServico, Long
 
     boolean existsByExecutorId(Long executorId);
 
+    /** Etapas com prazo vencido que ainda não foram escaladas. */
+    @Query("""
+            select os.id from OrdemServico os
+            where os.status in :etapas and os.prazoEtapa < :agora
+            """)
+    List<Long> idsParaEscalar(@Param("etapas") Collection<StatusOS> etapas, @Param("agora") Instant agora);
+
+    /** Concluídas há mais que o limite, com confiança alta da IA e sem resposta do cidadão. */
+    @Query("""
+            select os.id from OrdemServico os
+            where os.status = br.com.zela.api.dominio.StatusOS.CONCLUIDA
+              and os.concluidaEm < :limite and os.confiancaIa >= :confiancaMinima and os.cidadaoConfirmou is null
+            """)
+    List<Long> idsParaAceiteTacito(@Param("limite") Instant limite, @Param("confiancaMinima") double confiancaMinima);
+
+    @EntityGraph(attributePaths = {"executor", "ocorrencia"})
+    List<OrdemServico> findAllByOrderByIdAsc();
+
     /** Escaladas ou com o prazo da etapa vencido em uma etapa aberta (as mais atrasadas primeiro). */
     @Query("""
             select os from OrdemServico os join fetch os.executor join fetch os.ocorrencia o join fetch o.categoria

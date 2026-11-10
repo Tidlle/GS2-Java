@@ -44,6 +44,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OrdemServico implements ComEventos {
 
+    /** Prazo dado à etapa seguinte quando a OS sai de ESCALADA já atrasada. */
+    public static final Duration PRAZO_RECUPERACAO = Duration.ofHours(24);
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -126,6 +129,11 @@ public class OrdemServico implements ComEventos {
         }
         eventos.add(new EventoOS(this, status, novo, ator, justificativa));
         pendentes.add(new Pendente(status, novo, ator.nome(), justificativa));
+        // Saindo de ESCALADA com o prazo vencido, a nova etapa ganha um prazo de recuperação
+        // (senão o agendador escalaria de novo no ciclo seguinte).
+        if (status == StatusOS.ESCALADA && prazoEtapa.isBefore(Instant.now())) {
+            prazoEtapa = Instant.now().plus(PRAZO_RECUPERACAO);
+        }
         status = novo;
         if (novo == StatusOS.CONCLUIDA) {
             concluidaEm = Instant.now();
