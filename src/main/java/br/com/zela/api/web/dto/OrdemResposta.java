@@ -37,6 +37,7 @@ public record OrdemResposta(
     public record OcorrenciaResumo(
             Long id,
             String titulo,
+            Long categoriaId,
             String categoriaNome,
             String descricaoIA,
             String bairro,
@@ -48,7 +49,8 @@ public record OrdemResposta(
             Long autorId) {
 
         static OcorrenciaResumo de(Ocorrencia o) {
-            return new OcorrenciaResumo(o.getId(), o.getTitulo(), o.getCategoria().getNome(), o.getDescricao(),
+            return new OcorrenciaResumo(o.getId(), o.getTitulo(), o.getCategoria().getId(), o.getCategoria().getNome(),
+                    o.getDescricao(),
                     o.getBairro(), o.getEndereco(), o.getLocalizacao().latitude(), o.getLocalizacao().longitude(),
                     o.getFotoAntesUrl(), o.isUrgente(), o.getAutor().getId());
         }
