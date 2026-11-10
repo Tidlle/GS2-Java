@@ -307,12 +307,13 @@ Commits pequenos e com mensagens claras (o histórico de Git é avaliado no Mobi
 - [ ] Teste manual com o RabbitMQ real e prints do painel para o README (Docker não respondeu em 09/11)
 
 ### Fase 8 · Prazos e indicadores (15/11)
-- [ ] `@EnableScheduling` com intervalos configuráveis (curtos na demo)
-- [ ] Agendador de confirmação: 24 h sem resposta → segue o fluxo
-- [ ] Agendador de escalonamento: prazo estourado → `ESCALADA` + evento
-- [ ] Agendador de aceite tácito: confiança ≥ 0,8 e 48 h sem contestação → encerra
-- [ ] `GET /indicadores`, `/indicadores/executores`, `/indicadores/bairros` (consultas agregadas)
-- [ ] Testes de unidade dos três agendadores
+- [x] `@EnableScheduling` com intervalos configuráveis (curtos na demo)
+- [x] Agendador de confirmação: 24 h sem resposta → segue o fluxo
+- [x] Agendador de escalonamento: prazo estourado → `ESCALADA` + evento
+- [x] Agendador de aceite tácito: confiança ≥ 0,8 e 48 h sem contestação → encerra
+- [x] `GET /indicadores`, `/indicadores/executores`, `/indicadores/bairros` (consultas agregadas)
+- [x] Testes das três regras com o relógio simulado no banco (130 testes no total)
+- [x] Extra: `POST /prazos/executar` para a demonstração e histórico de demonstração (`db/demo`) para os indicadores
 
 ### Fase 9 · Qualidade e testes (15–16/11)
 - [ ] Revisar a cobertura dos requisitos 01–06 de Java item por item (seção 1.1)

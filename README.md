@@ -92,6 +92,8 @@ Copie `.env.example` para `.env` para definir variáveis locais. O `.env` não v
 | `IA_MODELO` | Modelo do Gemini (padrão `gemini-2.5-flash`) | não |
 | `FOTOS_DIRETORIO` | Pasta das fotos enviadas (padrão `uploads`) | não |
 | `MENSAGERIA_MODO` | `rabbitmq` (padrão) ou `local` (sem broker) | não |
+| `AGENDAMENTO_HABILITADO` | Liga o agendador de prazos (padrão `true`) | não |
+| `AGENDAMENTO_INTERVALO` | Intervalo do agendador em ISO-8601 (padrão `PT5M`) | não |
 | `ZELA_AMBIENTE` | Nome do ambiente exibido em `/info` | não |
 
 Nenhuma senha ou chave fica no código: os valores de produção vêm das variáveis do pipeline.
@@ -195,6 +197,30 @@ No Swagger, faça login em `POST /auth/login`, copie o `token` e cole no botão 
 Cada passo grava um evento na **timeline** (quem, quando, de qual para qual status e por quê), que é também a trilha de auditoria. O supervisor vê as OS escaladas ou atrasadas, cobra o executor e reatribui.
 
 Os limites ficam em `zela.regras` no `application.yml` (3 confirmações, 3 negações, 4 h de plantão, raio de 2 km).
+
+## Prazos automáticos
+
+Um agendador (`@Scheduled`, a cada 5 minutos) aplica as regras de prazo. Para a demonstração, `POST /prazos/executar` roda o mesmo ciclo na hora.
+
+| Regra | Quando | O que acontece |
+|---|---|---|
+| Confirmação que não bloqueia | Ocorrência aguardando vizinhos há mais de 24 h | Segue como confirmada; categoria de rotina vira OS automática, as outras vão às exceções |
+| Escalonamento | Etapa emitida, aceita, em execução ou reaberta com prazo vencido | OS fica `ESCALADA`; supervisor e cidadão são avisados. Ao retomar, a etapa ganha 24 h de recuperação |
+| Aceite tácito | OS concluída há mais de 48 h, IA com confiança ≥ 0,8 e sem resposta do cidadão | Validada e encerrada automaticamente; a ocorrência fica resolvida |
+
+Cada item é tratado na própria transação: se um falhar, os outros seguem. Os limites ficam em `zela.regras` e o intervalo em `AGENDAMENTO_INTERVALO`.
+
+## Indicadores
+
+| Indicador | Como é calculado |
+|---|---|
+| Prazos cumpridos | OS concluídas antes do prazo da etapa ÷ OS concluídas |
+| Retrabalho | OS reprovadas pelo gestor ou contestadas pelo cidadão ao menos uma vez ÷ OS concluídas |
+| Tempo médio | Horas da emissão da OS até a conclusão |
+| Avaliação | Média das notas (1 a 5) dadas pelos cidadãos |
+| Bairros | Ocorrências, resolvidas e horas até a solução, do bairro mais rápido para o mais lento |
+
+Em desenvolvimento, a carga inclui um **histórico de demonstração** (`db/demo`: 18 OS encerradas em quatro bairros) para os indicadores terem dados. Os testes não carregam esse histórico.
 
 ## Inteligência artificial (Spring AI + Google Gemini)
 
@@ -330,10 +356,13 @@ Listagens são paginadas: `?page=0&size=20&sort=nome,asc`. Resposta: `{ "content
 | GET | `/notificacoes` | logado | Meus avisos (paginado, mais recentes primeiro) |
 | GET | `/notificacoes/nao-lidas` | logado | Quantidade de avisos não lidos |
 | POST | `/notificacoes/lidas` | logado | Marca todos como lidos |
+| GET | `/indicadores` | gestor, supervisor | Painel: abertas, atrasadas, prazos cumpridos, retrabalho, exceções, bairros |
+| GET | `/indicadores/executores` | gestor, supervisor | Desempenho por executor (base para fiscalizar contratos) |
+| GET | `/indicadores/bairros` | gestor, supervisor | Tempo de resolução por bairro |
+| POST | `/prazos/executar` | supervisor, gestor | Roda agora a verificação de prazos (a mesma do agendador) |
 | GET | `/info` | público | Nome, versão e ambiente da API |
 | GET | `/actuator/health` | público | Health check |
 
-_Indicadores entram na próxima fase (veja `docs/plano-java.md`)._
 
 ---
 
@@ -346,7 +375,7 @@ _Indicadores entram na próxima fase (veja `docs/plano-java.md`)._
 - [x] Fase 5 — ciclo da ordem de serviço (executor, gestor, cidadão e supervisor)
 - [x] Fase 6 — fotos e Spring AI (Gemini) com triagem e comparação antes/depois
 - [x] Fase 7 — RabbitMQ: eventos após o commit, filas de notificações e alertas, DLQ
-- [ ] Fase 8 — prazos e indicadores
+- [x] Fase 8 — prazos automáticos (24 h, escalonamento, aceite tácito) e indicadores
 - [ ] Fase 9 — qualidade e testes
 - [ ] Fase 10 — integração com o app mobile
 - [ ] Fase 11 — documentação e entrega
