@@ -1,10 +1,17 @@
-# Perfil de produção (nuvem). Todas as variáveis abaixo são obrigatórias e vêm do pipeline.
-# O driver e o dialeto do banco serão definidos junto com o chat de DevOps.
+# Perfil de produção (nuvem): Azure SQL Database (SQL Server).
+# Todas as variáveis abaixo são obrigatórias e vêm do pipeline de Release (nunca do código).
+#   DB_URL = jdbc:sqlserver://<servidor>.database.windows.net:1433;database=zela;encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30
+# O Flyway aplica db/migration/sqlserver (e db/demo/sqlserver) na subida; o Hibernate só valida o schema.
 spring:
   datasource:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+    hikari:
+      # O tier Basic do Azure SQL aceita poucas sessões simultâneas; um pool pequeno basta para a API.
+      maximum-pool-size: ${DB_POOL_MAXIMO:5}
+      # Azure SQL Basic pode demorar alguns segundos para responder na primeira conexão.
+      connection-timeout: 30000
   h2:
     console:
       enabled: false
