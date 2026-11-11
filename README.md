@@ -404,4 +404,7 @@ A conferência item a item (requisitos, descontos, segurança e roteiro da apres
 
 ## Declaração de uso de IA
 
-_[A preencher: ferramentas de IA generativa usadas no desenvolvimento e para quê, conforme a regra da GS.]_
+| Ferramenta | Para quê |
+|---|---|
+| Claude Code (Anthropic) | Apoio no desenvolvimento: planejamento, código, testes e documentação, revisados e testados pelo grupo. |
+| Google Gemini | Funcionalidade da solução: triagem da foto e comparação antes/depois (via Spring AI). |
