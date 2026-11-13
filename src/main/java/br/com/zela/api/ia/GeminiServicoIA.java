@@ -51,8 +51,9 @@ public class GeminiServicoIA implements ServicoIA {
                 A primeira imagem é o ANTES e a segunda é o DEPOIS de um serviço de zeladoria.
                 Problema reportado: "%s".
                 - "resolvido": true se o DEPOIS mostra o mesmo local com o problema resolvido.
-                - "confianca": número de 0 a 1. Use valores baixos se as fotos parecerem de locais diferentes,
-                  se o DEPOIS estiver escuro/borrado ou se o reparo parecer parcial.
+                - "confianca": sua certeza, de 0 a 1, de que o problema FOI RESOLVIDO no mesmo local.
+                  Se "resolvido" for false, use um valor baixo (perto de 0). Use valores baixos também se as fotos
+                  parecerem de locais diferentes, se o DEPOIS estiver escuro/borrado ou se o reparo parecer parcial.
                 - "observacao": uma frase explicando a decisão.
                 """.formatted(descricaoDoProblema);
         try {

@@ -172,8 +172,9 @@ public class OrdemServicoService {
         os.registrarConclusao(fotoDepois, StringUtils.hasText(req.observacao()) ? req.observacao().trim() : null,
                 comparacao.map(Comparacao::confianca).orElse(null));
         os.registrarEvento(Ator.sistema("IA (" + ia.origem() + ")"), comparacao
-                .map(c -> "%s com %d%% de confiança. %s".formatted(c.resolvido() ? "Resolvido" : "Não resolvido",
-                        Math.round(c.confianca() * 100), c.observacao() == null ? "" : c.observacao()).trim())
+                .map(c -> (c.resolvido()
+                        ? "Resolvido com %d%% de confiança. ".formatted(Math.round(c.confianca() * 100))
+                        : "Não resolvido. ").concat(c.observacao() == null ? "" : c.observacao()).trim())
                 .orElse("Comparação antes/depois indisponível; validação pelo gestor ou pelo cidadão"));
         return OrdemResposta.detalhe(os);
     }

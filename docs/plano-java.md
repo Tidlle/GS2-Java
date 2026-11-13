@@ -294,7 +294,7 @@ Commits pequenos e com mensagens claras (o histórico de Git é avaliado no Mobi
 - [x] `IaSimulada` para dev, testes e CI (sem chave)
 - [x] `POST /ocorrencias/triagem` e comparação antes/depois no `concluir` (grava `confiancaIA`)
 - [x] Falha da IA → a foto fica salva e o cidadão escolhe a categoria; na conclusão, a validação fica com o gestor ou o cidadão
-- [ ] Testar com fotos reais (poste, buraco, entulho, calçada, árvore) e registrar os resultados para o README (falta a chave do Gemini no .env)
+- [x] Testado com fotos reais (5 categorias corretas, 90% a 98%, 1,6 a 3,3 s) e comparação antes/depois; resultados no README. Achou e corrigiu um bug do aceite tácito (confiança de OS não resolvida). Falta testar o caso "resolvido" com foto real do reparo
 - [x] Ligação com o Gemini conferida com chave falsa: o modelo é criado, o Google recusa e a triagem cai no caminho seguro
 - **Pronto quando:** com `GEMINI_API_KEY` definida, uma foto real vira categoria e descrição corretas (112 testes passando)
 
@@ -320,7 +320,7 @@ Commits pequenos e com mensagens claras (o histórico de Git é avaliado no Mobi
 - [x] Completar testes de integração faltantes; `./mvnw verify` gera os relatórios JUnit para o CI
 - [x] Revisão de segurança: nenhum segredo no código, nenhuma senha em resposta, posse checada em todos os endpoints
 - [x] Coleção Postman com login e as rotas principais por papel
-- [x] Extras: emissor do JWT conferido, bloqueio de login após 5 erros (429), cobertura com JaCoCo (93% das linhas, 135 testes), `docs/requisitos-java.md`
+- [x] Extras: emissor do JWT conferido, bloqueio de login após 5 erros (429), cobertura com JaCoCo (93% das linhas, 137 testes), `docs/requisitos-java.md`
 - [x] Perfil `prod` testado: sem `JWT_SECRET` não sobe; console do H2 desligado; RabbitMQ fora do health check
 
 ### Fase 10 · Integração com o app Mobile (16–17/11) · *em `Ideia_GS2/zela`* · **primeira versão — vamos revisitar depois**

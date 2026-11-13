@@ -131,7 +131,7 @@ class FotoEIaApiTest extends TesteDeApi {
         String mesma = enviarFoto(EXECUTOR, png(30));
         mvc.perform(json(como(EXECUTOR, post("/ordens/" + osId + "/concluir")),
                         "{\"fotoDepoisUrl\": \"%s\"}".formatted(mesma)))
-                .andExpect(jsonPath("$.confiancaIA").value(0.1))
+                .andExpect(jsonPath("$.confiancaIA").value(0.0))
                 .andExpect(jsonPath("$.timeline[-1:].justificativa", hasItem(startsWith("Não resolvido"))));
     }
 }

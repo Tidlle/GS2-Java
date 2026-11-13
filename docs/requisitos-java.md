@@ -1,7 +1,7 @@
 # Zela API — Conferência dos requisitos de Java Advanced
 
 > Base: `2TDS Fevereiro - Global Solution 2026-2.pdf`, seção Java Advanced. Conferido em 09/11/2026.
-> Números do projeto: 9 entidades, 53 endpoints, 135 testes automatizados, 93% das linhas cobertas por testes (JaCoCo).
+> Números do projeto: 9 entidades, 53 endpoints, 137 testes automatizados, 93% das linhas cobertas por testes (JaCoCo).
 
 ## Tecnologias obrigatórias
 
@@ -61,7 +61,7 @@
 
 ## Pendências conhecidas
 
-- Testar a IA com a chave real do Gemini e registrar os resultados com fotos reais.
+- Testar a comparação antes/depois no caso "resolvido" com foto real do reparo (a triagem e os casos "não resolvido" já foram testados com o Gemini).
 - Testar com o RabbitMQ real (Docker) e tirar prints do painel.
 - Criar as migrações e o `scripts/script-bd.sql` do banco da nuvem, quando o chat de DevOps definir o banco.
 - Fase 10 (app Mobile): revisitar GPS real, URL da nuvem, teste no celular e commits do app.

@@ -77,7 +77,7 @@ No Windows (PowerShell ou cmd), use `mvnw.cmd spring-boot:run`.
 
 Os testes usam o perfil `test` e rodam **sem RabbitMQ e sem chave de IA**, como o pipeline de CI exige.
 
-- **135 testes** (unidade e integração com MockMvc): regras de domínio, segurança por papel e por posse, validações, CRUDs, fluxo completo da OS, IA, mensageria, prazos e indicadores.
+- **137 testes** (unidade e integração com MockMvc): regras de domínio, segurança por papel e por posse, validações, CRUDs, fluxo completo da OS, IA, mensageria, prazos e indicadores.
 - Relatórios JUnit: `target/surefire-reports`. Cobertura (JaCoCo, **93% das linhas**): `target/site/jacoco/index.html` (e `jacoco.xml` para o CI).
 
 ### Postman
@@ -265,6 +265,33 @@ A chave é gratuita em https://aistudio.google.com/apikey (veja "Como obter a ch
 Sem isso, a API usa a **IA simulada** (determinística e sem rede), que é a usada nos testes e no CI. Em `POST /ocorrencias/triagem` a resposta traz `origem: "gemini"` ou `"simulada"`.
 
 **Como obter a chave:** entre em https://aistudio.google.com/apikey com uma conta Google, aceite os termos e clique em **Create API key** (contas novas já ganham um projeto e uma chave padrão). Copie a chave para o `.env`; ela nunca vai para o Git. Na camada gratuita o Google pode usar o conteúdo enviado para melhorar os produtos dele, então teste com fotos de ruas sem pessoas.
+
+**Significado da confiança:** `confiancaIA` é a certeza de que o problema **foi resolvido**. Se a IA diz que não foi resolvido, a confiança gravada é **0**, qualquer que seja o número devolvido pelo modelo: assim uma OS não resolvida nunca atinge os 80% do aceite tácito.
+
+### Resultados com fotos reais (Gemini `gemini-3.5-flash-lite`, 12/11/2026)
+
+Triagem (`POST /ocorrencias/triagem`) com uma foto de cada categoria:
+
+| Foto | Categoria sugerida | Confiança | Urgente | Tempo |
+|---|---|---|---|---|
+| Buraco no asfalto | Buraco | 98% | não | 3,3 s |
+| Poste de luz com fiação | Iluminação | 90% | não | 1,6 s |
+| Sacos de lixo na calçada | Entulho | 95% | não | 2,6 s |
+| Calçada danificada por raízes | Calçada | 95% | não | 2,2 s |
+| Árvore caída ao lado de uma estrada | Árvore | 95% | **sim** (aviso 199/193) | 2,4 s |
+
+As 5 categorias vieram corretas. Uma imagem cinza sem problema nenhum foi recusada ("não reconheceu um problema de zeladoria"), e o cidadão escolhe a categoria. Comparação antes/depois na conclusão da OS (cerca de 2 s):
+
+| Caso | Resultado da IA | `confiancaIA` |
+|---|---|---|
+| Mesma foto no antes e no depois | "Não resolvido: as imagens são idênticas" | 0 |
+| Depois = foto de outro local | "Não resolvido: locais completamente diferentes" | 0 |
+
+**O que os testes revelaram:** na primeira rodada, o Gemini respondeu "não resolvido, com 100% de confiança" para as fotos idênticas, e a API gravou 100%, o que permitiria o aceite tácito de uma OS não resolvida. A correção é a regra acima (confiança 0 quando não resolvido) e um pedido mais claro à IA, ambos com testes automatizados.
+
+**Ainda não testado com foto real:** o caso "resolvido" (antes e depois do mesmo local, com o reparo feito). A urgência pode ser sensível: a árvore caída ao lado de uma estrada de terra foi marcada como urgente.
+
+Fotos usadas (Wikimedia Commons, licenças livres; a autoria está em cada página): [buraco](https://commons.wikimedia.org/wiki/File:Potholes_on_asphalt_road_20171023.jpg) (CC BY-SA 4.0), [poste](https://commons.wikimedia.org/wiki/File:Telegraph_pole-mounted_streetlight_on_Quex_View_Road_-_geograph.org.uk_-_1485279.jpg) (CC BY-SA 2.0), [lixo](https://commons.wikimedia.org/wiki/File:Everyday_Dumping_(36312775123).jpg) (CC BY-SA 2.0), [calçada](https://commons.wikimedia.org/wiki/File:Damaged_sidewalk_in_Poland,_besch%C3%A4digte_Gehweg_Pflastersteine.jpg) (CC BY 3.0) e [árvore](https://commons.wikimedia.org/wiki/File:Road_blocked_by_fallen_tree_-_geograph.org.uk_-_2927837.jpg) (CC BY-SA 2.0).
 
 **Limitações:** a IA vê só a foto (não confirma o local; isso é papel do GPS no check-in); fotos escuras ou de outro ângulo reduzem a confiança; a decisão final pode sempre ser revista pelo gestor ou contestada pelo cidadão.
 

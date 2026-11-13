@@ -10,12 +10,14 @@ import br.com.zela.api.armazenamento.Imagem;
 import br.com.zela.api.dominio.Categoria;
 import br.com.zela.api.dominio.Executor;
 import br.com.zela.api.dominio.TipoExecutor;
+import br.com.zela.api.ia.Comparacao;
 import br.com.zela.api.ia.FalhaIAException;
 import br.com.zela.api.ia.ServicoIA;
 import br.com.zela.api.ia.Triagem;
 import br.com.zela.api.repositorio.CategoriaRepository;
 import br.com.zela.api.web.dto.TriagemResposta;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
 
@@ -62,6 +64,27 @@ class TriagemServiceTest {
         assertThat(triarCom(new Triagem("Iluminação", "Poste apagado.", false, 7)).confianca()).isEqualTo(1.0);
         TriagemResposta baixa = triarCom(new Triagem("Iluminação", "Poste apagado.", false, 0.3));
         assertThat(baixa.aviso()).contains("baixa confiança");
+    }
+
+    @Test
+    void osNaoResolvidaNuncaTemConfiancaAlta() {
+        // O Gemini chegou a responder "não resolvido, com 100% de certeza": isso NÃO pode virar confiança de resolução.
+        when(fotos.carregarPorUrl(any())).thenReturn(Optional.of(new Imagem(new byte[] {1}, Imagem.Tipo.PNG)));
+        when(ia.comparar(any(), any(), any())).thenReturn(new Comparacao(false, 1.0, "Imagens idênticas."));
+
+        Comparacao c = servico.comparar("/fotos/antes.png", "/fotos/depois.png", "Buraco").orElseThrow();
+
+        assertThat(c.resolvido()).isFalse();
+        assertThat(c.confianca()).isZero();
+    }
+
+    @Test
+    void osResolvidaMantemAConfiancaDaIa() {
+        when(fotos.carregarPorUrl(any())).thenReturn(Optional.of(new Imagem(new byte[] {1}, Imagem.Tipo.PNG)));
+        when(ia.comparar(any(), any(), any())).thenReturn(new Comparacao(true, 0.93, "Asfalto refeito."));
+
+        assertThat(servico.comparar("/fotos/antes.png", "/fotos/depois.png", "Buraco").orElseThrow().confianca())
+                .isEqualTo(0.93);
     }
 
     @Test

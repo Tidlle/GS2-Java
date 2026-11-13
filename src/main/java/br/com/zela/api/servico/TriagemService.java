@@ -85,7 +85,11 @@ public class TriagemService {
         }
         try {
             Comparacao c = ia.comparar(antes.get(), depois.get(), descricao);
-            return Optional.of(new Comparacao(c.resolvido(), limitar(c.confianca()), c.observacao()));
+            // A confiança significa "certeza de que foi resolvido". Se a IA diz que NÃO foi resolvido, ela vale 0,
+            // qualquer que seja o número devolvido (um modelo pode responder "100% certo de que não foi"): assim uma
+            // OS não resolvida nunca atinge a confiança mínima do aceite tácito.
+            double confianca = c.resolvido() ? limitar(c.confianca()) : 0.0;
+            return Optional.of(new Comparacao(c.resolvido(), confianca, c.observacao()));
         } catch (RuntimeException e) {
             log.warn("Comparação por IA indisponível: {}", motivo(e));
             return Optional.empty();
