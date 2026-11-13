@@ -102,7 +102,7 @@ Copie `.env.example` para `.env` para definir variáveis locais. O `.env` não v
 | `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER`, `RABBITMQ_PASSWORD` | Conexão com o RabbitMQ | sim |
 | `IA_PROVEDOR` | `none` (IA simulada) ou `google-genai` (Gemini) | não |
 | `GEMINI_API_KEY` | Chave da API do Gemini | se `IA_PROVEDOR=google-genai` |
-| `IA_MODELO` | Modelo do Gemini (padrão `gemini-2.5-flash`) | não |
+| `IA_MODELO` | Modelo do Gemini (padrão `gemini-3.5-flash-lite`) | não |
 | `FOTOS_DIRETORIO` | Pasta das fotos enviadas (padrão `uploads`) | não |
 | `MENSAGERIA_MODO` | `rabbitmq` (padrão) ou `local` (sem broker) | não |
 | `AGENDAMENTO_HABILITADO` | Liga o agendador de prazos (padrão `true`) | não |
@@ -260,7 +260,11 @@ IA_PROVEDOR=google-genai
 GEMINI_API_KEY=sua-chave
 ```
 
+A chave é gratuita em https://aistudio.google.com/apikey (veja "Como obter a chave" abaixo). O modelo padrão é o `gemini-3.5-flash-lite`: o `gemini-2.5-flash` foi descontinuado pelo Google e contas novas não conseguem usá-lo.
+
 Sem isso, a API usa a **IA simulada** (determinística e sem rede), que é a usada nos testes e no CI. Em `POST /ocorrencias/triagem` a resposta traz `origem: "gemini"` ou `"simulada"`.
+
+**Como obter a chave:** entre em https://aistudio.google.com/apikey com uma conta Google, aceite os termos e clique em **Create API key** (contas novas já ganham um projeto e uma chave padrão). Copie a chave para o `.env`; ela nunca vai para o Git. Na camada gratuita o Google pode usar o conteúdo enviado para melhorar os produtos dele, então teste com fotos de ruas sem pessoas.
 
 **Limitações:** a IA vê só a foto (não confirma o local; isso é papel do GPS no check-in); fotos escuras ou de outro ângulo reduzem a confiança; a decisão final pode sempre ser revista pelo gestor ou contestada pelo cidadão.
 

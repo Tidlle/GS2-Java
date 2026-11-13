@@ -192,7 +192,7 @@ Os DTOs de resposta usam **os mesmos nomes de campo dos tipos TypeScript** (`tit
   ```yaml
   spring.ai.model.chat: ${IA_PROVEDOR:none}          # none = IA simulada · google-genai = Gemini
   spring.ai.google.genai.api-key: ${GEMINI_API_KEY:}
-  spring.ai.google.genai.chat.options.model: ${IA_MODELO:gemini-2.5-flash}
+  spring.ai.google.genai.chat.options.model: ${IA_MODELO:gemini-3.5-flash-lite}
   ```
   O modelo fica em variável (`IA_MODELO`); na Fase 6 conferimos qual modelo multimodal está disponível na chave.
 - `IaSimulada`: ativa com `zela.ia.modo=simulada` ou sem chave. CI, testes e "rodar seguindo o README" funcionam sem custo e sem rede.

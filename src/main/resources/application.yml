@@ -48,7 +48,7 @@ spring:
         api-key: ${GEMINI_API_KEY:}
         chat:
           options:
-            model: ${IA_MODELO:gemini-2.5-flash}
+            model: ${IA_MODELO:gemini-3.5-flash-lite}
   data:
     web:
       pageable:
