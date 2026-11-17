@@ -75,6 +75,7 @@ stages:
               testResultsFormat: 'JUnit'
               testResultsFiles: '**/surefire-reports/TEST-*.xml'
               testRunTitle: 'Zela API · testes automáticos (JUnit)'
+              mergeTestResults: true      # uma única execução com todos os testes na aba Tests
               failTaskOnFailedTests: true
 
           - task: PublishCodeCoverageResults@2
