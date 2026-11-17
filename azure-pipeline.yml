@@ -56,12 +56,16 @@ stages:
           - script: java -version
             displayName: 'Conferir a versão do Java'
 
+          # O wrapper é chamado com caminho explícito: no Windows, o cmd.exe pode estar configurado
+          # para não procurar programas na pasta atual (NoDefaultCurrentDirectoryInExePath).
           - script: ./mvnw clean verify
             displayName: 'Maven verify: compilar, rodar os testes e gerar o .jar (Linux)'
+            workingDirectory: '$(System.DefaultWorkingDirectory)'
             condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
 
-          - script: mvnw.cmd clean verify
+          - script: .\mvnw.cmd clean verify
             displayName: 'Maven verify: compilar, rodar os testes e gerar o .jar (Windows)'
+            workingDirectory: '$(System.DefaultWorkingDirectory)'
             condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
 
           - task: PublishTestResults@2
