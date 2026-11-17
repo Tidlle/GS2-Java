@@ -1,0 +1,108 @@
+# =====================================================================================
+# Zela API · Pipeline de Release (CD) · Azure Pipelines
+# =====================================================================================
+# Dispara SOZINHA quando a pipeline de Build (zela-ci) termina com sucesso na main e publica
+# um novo artefato "drop". Etapas: baixa o artefato, aplica as variáveis de ambiente no Web App
+# (variable group "zela-secrets"), publica o .jar no Azure App Service e confere a API no ar.
+# Os recursos usados (Web App e Azure SQL) foram criados por scripts/infra-azure.sh.
+# =====================================================================================
+
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+trigger: none           # não roda por commit: quem dispara é o artefato novo da CI
+pr: none
+
+resources:
+  pipelines:
+    - pipeline: ci              # apelido usado nas etapas ($(Pipeline.Workspace)/ci/...)
+      source: zela-ci           # nome da pipeline de Build no Azure DevOps
+      trigger:
+        branches:
+          include:
+            - main
+
+pool:
+  name: Default
+
+variables:
+  - group: zela-secrets         # DB_URL, DB_USER, DB_PASSWORD🔒, JWT_SECRET🔒, IA_PROVEDOR
+  - name: azureSubscription     # service connection (Azure Resource Manager, escopo rg-zela)
+    value: 'sc-zela-azure'
+  - name: resourceGroup
+    value: 'rg-zela'
+  - name: webAppName
+    value: 'app-zela-rm562259'
+  - name: urlApi
+    value: 'https://app-zela-rm562259.azurewebsites.net'
+
+stages:
+  - stage: Deploy
+    displayName: 'CD · Deploy da Zela API na Azure'
+    jobs:
+      - deployment: DeployAppService
+        displayName: 'Publicar no Azure App Service'
+        environment: 'producao'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: ci
+                  artifact: drop
+                  displayName: 'Baixar o artefato "drop" gerado pela CI'
+
+                - script: |
+                    echo Build de origem: $(resources.pipeline.ci.runName) (id $(resources.pipeline.ci.runID))
+                    echo Commit: $(resources.pipeline.ci.sourceCommit)
+                    dir "$(Pipeline.Workspace)\ci\drop"
+                  displayName: 'Conferir o artefato recebido'
+                  condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
+
+                - task: AzureAppServiceSettings@1
+                  displayName: 'Aplicar as variáveis de ambiente no Web App'
+                  inputs:
+                    azureSubscription: '$(azureSubscription)'
+                    appName: '$(webAppName)'
+                    resourceGroupName: '$(resourceGroup)'
+                    appSettings: |
+                      [
+                        { "name": "SPRING_PROFILES_ACTIVE", "value": "prod", "slotSetting": false },
+                        { "name": "DB_URL", "value": "$(DB_URL)", "slotSetting": false },
+                        { "name": "DB_USER", "value": "$(DB_USER)", "slotSetting": false },
+                        { "name": "DB_PASSWORD", "value": "$(DB_PASSWORD)", "slotSetting": false },
+                        { "name": "JWT_SECRET", "value": "$(JWT_SECRET)", "slotSetting": false },
+                        { "name": "IA_PROVEDOR", "value": "$(IA_PROVEDOR)", "slotSetting": false },
+                        { "name": "MENSAGERIA_MODO", "value": "local", "slotSetting": false }
+                      ]
+
+                - task: AzureWebApp@1
+                  displayName: 'Publicar o .jar no Azure App Service (Java 21)'
+                  inputs:
+                    azureSubscription: '$(azureSubscription)'
+                    appType: 'webAppLinux'
+                    appName: '$(webAppName)'
+                    resourceGroupName: '$(resourceGroup)'
+                    runtimeStack: 'JAVA|21-java21'
+                    package: '$(Pipeline.Workspace)/ci/drop/zela-api-*.jar'
+
+                - task: PowerShell@2
+                  displayName: 'Conferir a API no ar (health check e /info)'
+                  inputs:
+                    targetType: 'inline'
+                    script: |
+                      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                      $url = "$(urlApi)"
+                      # A primeira subida aplica as migrações no Azure SQL: espera até 8 minutos.
+                      for ($i = 1; $i -le 32; $i++) {
+                        try {
+                          $saude = Invoke-RestMethod -Uri "$url/actuator/health" -TimeoutSec 20
+                          if ($saude.status -eq 'UP') { break }
+                        } catch { }
+                        Write-Host "Tentativa ${i}: API ainda subindo..."
+                        Start-Sleep -Seconds 15
+                      }
+                      if ($saude.status -ne 'UP') { Write-Error "A API não respondeu UP em $url/actuator/health"; exit 1 }
+                      $info = Invoke-RestMethod -Uri "$url/info" -TimeoutSec 20
+                      Write-Host "Health: UP"
+                      Write-Host ("Info: " + ($info | ConvertTo-Json -Compress))
+                      Write-Host "API .....: $url"
+                      Write-Host "Swagger .: $url/swagger-ui.html"
