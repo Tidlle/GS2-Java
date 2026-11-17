@@ -1,0 +1,190 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1010" viewBox="0 0 1600 1010" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="seta" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1f2937"/>
+    </marker>
+    <marker id="seta-azul" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0b6bcb"/>
+    </marker>
+    <marker id="seta-cinza" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#6b7280"/>
+    </marker>
+    <style>
+      .titulo { font-size: 26px; font-weight: 700; fill: #111827; }
+      .subtitulo { font-size: 14px; fill: #4b5563; }
+      .zona { font-size: 16px; font-weight: 700; }
+      .nome { font-size: 15px; font-weight: 700; fill: #111827; }
+      .txt { font-size: 13px; fill: #374151; }
+      .rot { font-size: 13px; font-weight: 600; fill: #111827; }
+      .num { font-size: 13px; font-weight: 700; fill: #ffffff; }
+      .fluxo { stroke: #1f2937; stroke-width: 2.2; fill: none; marker-end: url(#seta); }
+      .prov { stroke: #6b7280; stroke-width: 1.8; fill: none; stroke-dasharray: 7 5; marker-end: url(#seta-cinza); }
+      .exec { stroke: #0b6bcb; stroke-width: 2; fill: none; stroke-dasharray: 2 4; marker-end: url(#seta-azul); }
+      .devops { fill: #eaf2fc; stroke: #0b5cad; stroke-width: 2; }
+      .azure { fill: #e8f6f1; stroke: #0f7b5f; stroke-width: 2; }
+      .externo { fill: #f3f4f6; stroke: #6b7280; stroke-width: 2; }
+      .caixa { fill: #ffffff; stroke: #9ca3af; stroke-width: 1.4; }
+      .caixa-devops { fill: #ffffff; stroke: #0b5cad; stroke-width: 1.6; }
+      .caixa-azure { fill: #ffffff; stroke: #0f7b5f; stroke-width: 1.6; }
+      .grupo-azure { fill: #d3eee4; stroke: #0f7b5f; stroke-width: 1.4; stroke-dasharray: 4 3; }
+      .circulo { fill: #0b5cad; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1010" fill="#ffffff"/>
+  <text x="30" y="46" class="titulo">Zela API · Arquitetura macro de DevOps na Azure</text>
+  <text x="30" y="68" class="subtitulo">GS 2026/2 · CitizenTech · código no Azure Repos, CI/CD no Azure Pipelines e infraestrutura criada por script Azure CLI</text>
+
+  <!-- ================= Zona Azure DevOps ================= -->
+  <rect x="30" y="84" width="760" height="756" rx="16" class="devops"/>
+  <text x="50" y="112" class="zona" fill="#0b5cad">Azure DevOps · dev.azure.com/RM5622590186/Zela (projeto privado)</text>
+
+  <rect x="60" y="130" width="310" height="76" rx="10" class="caixa-devops"/>
+  <text x="76" y="158" class="nome">Desenvolvedor</text>
+  <text x="76" y="182" class="txt">VS Code / IntelliJ · Git · branch feature/&lt;id&gt;</text>
+
+  <rect x="450" y="130" width="310" height="96" rx="10" class="caixa-devops"/>
+  <text x="466" y="158" class="nome">Azure Boards (Scrum)</text>
+  <text x="466" y="182" class="txt">Epic › Feature › PBI › Task</text>
+  <text x="466" y="204" class="txt">Tasks ligadas a commits, branches e PRs</text>
+
+  <rect x="60" y="250" width="310" height="110" rx="10" class="caixa-devops"/>
+  <text x="76" y="278" class="nome">Azure Repos (Git privado)</text>
+  <text x="76" y="302" class="txt">Pull Request: feature/&lt;id&gt; → main</text>
+  <text x="76" y="324" class="txt">main protegida: revisor obrigatório,</text>
+  <text x="76" y="346" class="txt">work item vinculado e revisor padrão (RM)</text>
+
+  <rect x="450" y="250" width="310" height="110" rx="10" class="caixa-devops"/>
+  <text x="466" y="278" class="nome">Agente self-hosted EDUARDO</text>
+  <text x="466" y="302" class="txt">pool Default · Windows · JDK 21</text>
+  <text x="466" y="324" class="txt">executa as pipelines de CI e de CD</text>
+
+  <rect x="60" y="410" width="310" height="150" rx="10" class="caixa-devops"/>
+  <text x="76" y="438" class="nome">Pipeline de Build (CI) · zela-ci</text>
+  <text x="76" y="462" class="txt">azure-pipeline.yml · roda após o merge na main</text>
+  <text x="76" y="484" class="txt">JDK 21 → mvn verify</text>
+  <text x="76" y="506" class="txt">137 testes JUnit + cobertura JaCoCo</text>
+  <text x="76" y="528" class="txt">artefato drop: .jar + scripts</text>
+
+  <rect x="450" y="410" width="310" height="100" rx="10" class="caixa-devops"/>
+  <text x="466" y="438" class="nome">Variable group zela-secrets</text>
+  <text x="466" y="462" class="txt">DB_URL · DB_USER · IA_PROVEDOR</text>
+  <text x="466" y="484" class="txt">DB_PASSWORD 🔒 · JWT_SECRET 🔒</text>
+
+  <rect x="60" y="610" width="310" height="150" rx="10" class="caixa-devops"/>
+  <text x="76" y="638" class="nome">Pipeline de Release (CD) · zela-cd</text>
+  <text x="76" y="662" class="txt">azure-pipeline-cd.yml · disparo: artefato novo</text>
+  <text x="76" y="684" class="txt">aplica as variáveis no Web App</text>
+  <text x="76" y="706" class="txt">deploy do .jar → health check e /info</text>
+  <text x="76" y="728" class="txt">environment: producao</text>
+
+  <rect x="450" y="650" width="310" height="86" rx="10" class="caixa-devops"/>
+  <text x="466" y="678" class="nome">Service connection sc-zela-azure</text>
+  <text x="466" y="702" class="txt">Workload identity federation</text>
+  <text x="466" y="722" class="txt">papel: Colaborador só no rg-zela</text>
+
+  <!-- fluxos na zona DevOps -->
+  <line x1="215" y1="206" x2="215" y2="246" class="fluxo"/>
+  <circle cx="240" cy="226" r="12" class="circulo"/><text x="240" y="231" text-anchor="middle" class="num">1</text>
+  <text x="258" y="231" class="rot">push + PR</text>
+
+  <path d="M370,290 L410,290 L410,168 L446,168" class="prov"/>
+
+  <line x1="215" y1="360" x2="215" y2="406" class="fluxo"/>
+  <circle cx="240" cy="383" r="12" class="circulo"/><text x="240" y="388" text-anchor="middle" class="num">2</text>
+  <text x="258" y="388" class="rot">merge na main</text>
+
+  <line x1="215" y1="560" x2="215" y2="606" class="fluxo"/>
+  <circle cx="240" cy="583" r="12" class="circulo"/><text x="240" y="588" text-anchor="middle" class="num">3</text>
+  <text x="258" y="588" class="rot">artefato drop novo</text>
+
+  <path d="M450,340 L374,430" class="exec"/>
+  <path d="M450,350 L410,350 L410,640 L374,660" class="exec"/>
+  <path d="M450,470 L420,470 L420,600 L374,640" class="prov"/>
+  <line x1="450" y1="700" x2="374" y2="700" class="prov"/>
+
+  <!-- 4: deploy (sai da zona DevOps e entra na Azure) -->
+  <path d="M215,760 L215,806 L810,806 L810,420 L881,420" class="fluxo"/>
+  <circle cx="300" cy="806" r="12" class="circulo"/><text x="300" y="811" text-anchor="middle" class="num">4</text>
+  <text x="320" y="800" class="rot">deploy: .jar + variáveis de ambiente (via sc-zela-azure)</text>
+
+  <!-- ================= Zona Azure ================= -->
+  <rect x="830" y="84" width="740" height="516" rx="16" class="azure"/>
+  <text x="850" y="112" class="zona" fill="#0f7b5f">Microsoft Azure · Resource Group rg-zela · brazilsouth</text>
+
+  <rect x="860" y="130" width="680" height="72" rx="10" class="caixa-azure"/>
+  <circle cx="884" cy="160" r="12" class="circulo"/><text x="884" y="165" text-anchor="middle" class="num">0</text>
+  <text x="906" y="165" class="nome">scripts/infra-azure.sh (Azure CLI) cria o Resource Group, o Azure SQL e o App Service</text>
+  <text x="906" y="189" class="txt">scripts/script-bd.sql: DDL das 9 tabelas (no deploy, o Flyway aplica o mesmo DDL)</text>
+  <line x1="1025" y1="202" x2="1025" y2="236" class="prov"/>
+  <line x1="1385" y1="202" x2="1385" y2="236" class="prov"/>
+
+  <rect x="860" y="240" width="330" height="330" rx="12" class="grupo-azure"/>
+  <text x="876" y="264" class="rot">App Service Plan plan-zela · Linux B1</text>
+  <rect x="885" y="280" width="280" height="270" rx="10" class="caixa-azure"/>
+  <text x="901" y="308" class="nome">Web App app-zela-rm562259</text>
+  <text x="901" y="334" class="txt">Zela API · Java 21 · Spring Boot</text>
+  <text x="901" y="358" class="txt">HTTPS obrigatório · Always On</text>
+  <text x="901" y="382" class="txt">health check: /actuator/health</text>
+  <text x="901" y="406" class="txt">Flyway: migrações na subida</text>
+  <text x="901" y="430" class="txt">Swagger: /swagger-ui.html</text>
+  <text x="901" y="454" class="txt">JWT · 4 papéis · mensageria local</text>
+  <text x="901" y="478" class="txt">fotos em /home (disco persistente)</text>
+
+  <rect x="1230" y="240" width="310" height="330" rx="12" class="grupo-azure"/>
+  <text x="1246" y="264" class="rot">Azure SQL Server sql-zela-rm562259</text>
+  <rect x="1255" y="280" width="260" height="270" rx="10" class="caixa-azure"/>
+  <text x="1271" y="308" class="nome">Banco zela</text>
+  <text x="1271" y="334" class="txt">Azure SQL Database · Basic</text>
+  <text x="1271" y="358" class="txt">collation UTF-8</text>
+  <text x="1271" y="382" class="txt">9 tabelas + histórico Flyway</text>
+  <text x="1271" y="406" class="txt">firewall: serviços do Azure</text>
+  <text x="1271" y="430" class="txt">e IP do desenvolvedor (SELECTs)</text>
+
+  <line x1="1165" y1="415" x2="1251" y2="415" class="exec"/>
+  <circle cx="1210" cy="392" r="12" class="circulo"/><text x="1210" y="397" text-anchor="middle" class="num">5</text>
+  <text x="1210" y="440" text-anchor="middle" class="rot">JDBC</text>
+
+  <!-- ================= Zona externa ================= -->
+  <rect x="830" y="640" width="740" height="200" rx="16" class="externo"/>
+  <text x="850" y="831" class="zona" fill="#4b5563">Usuários e serviços externos</text>
+
+  <rect x="860" y="680" width="330" height="120" rx="10" class="caixa"/>
+  <text x="876" y="708" class="nome">App mobile Zela (Expo)</text>
+  <text x="876" y="732" class="txt">cidadão · gestor · executor · supervisor</text>
+  <text x="876" y="756" class="txt">Swagger / Postman (avaliação)</text>
+
+  <rect x="1230" y="680" width="310" height="120" rx="10" class="caixa"/>
+  <text x="1246" y="708" class="nome">Google Gemini (IA)</text>
+  <text x="1246" y="732" class="txt">triagem da foto e comparação</text>
+  <text x="1246" y="756" class="txt">opcional: sem chave, IA simulada</text>
+
+  <line x1="1025" y1="680" x2="1025" y2="554" class="exec"/>
+  <circle cx="1050" cy="620" r="12" class="circulo"/><text x="1050" y="625" text-anchor="middle" class="num">6</text>
+  <text x="1068" y="625" class="rot">HTTPS · JSON · JWT</text>
+  <path d="M1150,550 L1385,676" class="exec"/>
+  <text x="1306" y="622" class="rot">HTTPS (Spring AI)</text>
+
+  <!-- ================= Legenda ================= -->
+  <rect x="30" y="860" width="1540" height="140" rx="12" fill="#ffffff" stroke="#d1d5db" stroke-width="1.5"/>
+  <text x="50" y="888" class="zona" fill="#111827">Legenda</text>
+
+  <line x1="50" y1="914" x2="110" y2="914" class="fluxo"/>
+  <text x="120" y="919" class="txt">Fluxo de código e de CI/CD</text>
+  <line x1="330" y1="914" x2="390" y2="914" class="prov"/>
+  <text x="400" y="919" class="txt">Provisionamento (Azure CLI), vínculos e configuração</text>
+  <line x1="770" y1="914" x2="830" y2="914" class="exec"/>
+  <text x="840" y="919" class="txt">Execução e chamadas em tempo de execução</text>
+  <circle cx="1150" cy="914" r="12" class="circulo"/><text x="1150" y="919" text-anchor="middle" class="num">1</text>
+  <text x="1170" y="919" class="txt">Ordem do fluxo</text>
+  <text x="1310" y="919" class="txt">🔒 variável secreta</text>
+
+  <rect x="50" y="934" width="28" height="18" rx="4" class="devops"/>
+  <text x="88" y="948" class="txt">Azure DevOps (Boards, Repos, Pipelines)</text>
+  <rect x="400" y="934" width="28" height="18" rx="4" class="azure"/>
+  <text x="438" y="948" class="txt">Recursos na Azure (rg-zela)</text>
+  <rect x="660" y="934" width="28" height="18" rx="4" class="externo"/>
+  <text x="698" y="948" class="txt">Usuários e serviços externos</text>
+
+  <text x="50" y="982" class="txt">0 script Azure CLI cria a infraestrutura · 1 push em branch e PR com work item · 2 merge na main dispara a CI · 3 artefato novo dispara a CD · 4 deploy no App Service · 5 API ↔ Azure SQL (JDBC com TLS) · 6 app mobile consome a API</text>
+</svg>

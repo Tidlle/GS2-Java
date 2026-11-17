@@ -1,7 +1,7 @@
 # Zela API — zeladoria colaborativa com IA
 
 > Global Solution 2026/2 · **CitizenTech** · FIAP · 2º ano ADS · disciplina **Java Advanced**
-> Repositório: https://github.com/Tidlle/GS2-Java · Deploy: _[link após o pipeline de DevOps]_ · Vídeo pitch: _[link]_
+> Repositório: https://github.com/Tidlle/GS2-Java · Deploy (Azure): https://app-zela-rm562259.azurewebsites.net/swagger-ui.html · Vídeo pitch: _[link]_
 
 | RM | Nome | Turma |
 |---|---|---|
@@ -29,7 +29,8 @@ Esta é a **API principal**, consumida pelo app mobile (Expo/React Native) e pub
 | Autenticação | Spring Security + JWT |
 | IA generativa | Spring AI 2.0 + **Google Gemini** |
 | Mensageria (requisito 5, opção A) | **RabbitMQ** |
-| Banco | H2 (desenvolvimento e testes) · banco em nuvem (produção) · migrações com Flyway |
+| Banco | H2 (desenvolvimento e testes) · **Azure SQL Database** (produção) · migrações com Flyway |
+| Nuvem e DevOps | Azure App Service · Azure SQL · Azure Boards, Repos e Pipelines · Azure CLI ([seção DevOps](#devops-e-nuvem-azure)) |
 | Documentação | springdoc-openapi (Swagger UI) |
 | Build | Maven Wrapper · Docker |
 
@@ -116,11 +117,12 @@ Nenhuma senha ou chave fica no código: os valores de produção vêm das variá
 ## Estrutura
 
 ```
-├── azure-pipeline.yml        # CI/CD (DevOps)
+├── azure-pipeline.yml        # pipeline de Build (CI) no Azure Pipelines
+├── azure-pipeline-cd.yml     # pipeline de Release (CD): deploy no Azure App Service
 ├── docker-compose.yml        # API + RabbitMQ para rodar localmente
 ├── dockerfiles/Dockerfile    # imagem da API (build multi-stage)
 ├── scripts/                  # script-bd.sql e scripts Azure CLI (DevOps)
-├── docs/                     # plano e desenho da arquitetura
+├── docs/                     # planos e desenho da arquitetura (arquitetura-devops.png)
 └── src/main/java/br/com/zela/api/
     ├── config/        # OpenAPI, propriedades, CORS, RabbitMQ
     ├── seguranca/     # JWT e regras de acesso por papel
@@ -410,6 +412,174 @@ Listagens são paginadas: `?page=0&size=20&sort=nome,asc`. Resposta: `{ "content
 | GET | `/info` | público | Nome, versão e ambiente da API |
 | GET | `/actuator/health` | público | Health check |
 
+
+---
+
+## DevOps e nuvem (Azure)
+
+> Disciplina **DevOps Tools & Cloud Computing**. A solução publicada na nuvem é esta API Java.
+> Azure DevOps (projeto privado): https://dev.azure.com/RM5622590186/Zela · API: https://app-zela-rm562259.azurewebsites.net · Swagger: https://app-zela-rm562259.azurewebsites.net/swagger-ui.html
+
+### Solução e conceito
+
+O Zela é uma plataforma de **zeladoria urbana colaborativa**. O cidadão fotografa o problema (buraco, poste apagado, entulho…), a IA faz a triagem, os vizinhos confirmam e a prefeitura acompanha a **ordem de serviço** até o executor concluir com foto. A API Java é o centro da solução: o app mobile e o Swagger a consomem, e ela guarda tudo no Azure SQL.
+
+Na nuvem, o ciclo de entrega é automático: cada mudança entra por **Pull Request** vinculado a uma tarefa do **Azure Boards**; o merge na `main` dispara a **CI** (build e testes), e o artefato novo dispara a **Release**, que publica a API no **Azure App Service**.
+
+### Arquitetura macro
+
+![Arquitetura macro de DevOps do Zela](docs/arquitetura-devops.png)
+
+Fonte editável: [`docs/arquitetura-devops.svg`](docs/arquitetura-devops.svg) (o PNG é gerado por `docs/ferramentas/exportar-arquitetura.ps1`).
+
+| Passo | O que acontece |
+|---|---|
+| 0 | `scripts/infra-azure.sh` (Azure CLI) cria o Resource Group, o Azure SQL e o App Service |
+| 1 | O desenvolvedor faz commit numa branch `feature/<id>` e abre um PR vinculado à tarefa do Boards |
+| 2 | Com o PR aprovado, o merge na `main` dispara a pipeline de **Build** (`zela-ci`) |
+| 3 | A CI publica o artefato **drop**, que dispara a pipeline de **Release** (`zela-cd`) |
+| 4 | A Release aplica as variáveis de ambiente e publica o `.jar` no App Service |
+| 5 | A API acessa o Azure SQL (JDBC com TLS); o Flyway cria e atualiza as tabelas |
+| 6 | O app mobile e o Swagger consomem a API por HTTPS com JWT |
+
+### Recursos na Azure (criados pelo script)
+
+| Recurso | Nome | Configuração |
+|---|---|---|
+| Resource Group | `rg-zela` | Brazil South |
+| Azure SQL Server | `sql-zela-rm562259` | TLS 1.2 · firewall: serviços do Azure e IP do desenvolvedor |
+| Azure SQL Database | `zela` | Basic · collation `Latin1_General_100_CI_AS_SC_UTF8` (acentos em `VARCHAR`) |
+| App Service Plan | `plan-zela` | Linux · B1 |
+| Web App | `app-zela-rm562259` | Java 21 · HTTPS obrigatório · Always On · health check `/actuator/health` |
+
+Na nuvem a mensageria roda em modo `local` (eventos processados no próprio processo, depois do commit); o RabbitMQ é usado localmente com o `docker-compose.yml`.
+
+### Scripts (`/scripts`) e Dockerfile (`/dockerfiles`)
+
+| Arquivo | Para quê |
+|---|---|
+| [`scripts/infra-azure.sh`](scripts/infra-azure.sh) | Cria (ou confere) todos os recursos na Azure. Idempotente; senhas só por variável de ambiente ou digitadas |
+| [`scripts/script-bd.sql`](scripts/script-bd.sql) | DDL das 9 tabelas no Azure SQL (o mesmo que o Flyway aplica no deploy) |
+| [`scripts/azure-devops-policies.sh`](scripts/azure-devops-policies.sh) | Políticas da branch `main` no Azure Repos |
+| [`scripts/delete-infra.sh`](scripts/delete-infra.sh) | Apaga o Resource Group (pede confirmação) |
+| [`dockerfiles/Dockerfile`](dockerfiles/Dockerfile) | Imagem da API (build multi-stage), usada no `docker compose` local |
+
+```bash
+az login
+bash scripts/infra-azure.sh              # pergunta a senha do admin do Azure SQL
+bash scripts/azure-devops-policies.sh    # requer: az extension add --name azure-devops
+```
+
+### Azure Boards e Repos
+
+- Projeto **privado** com processo **Scrum**: Epic › Feature › PBI › Tasks; cada mudança tem uma Task.
+- Commits com `AB#<id>` e PRs com work item vinculado: a Task mostra commits, branches, PRs e builds.
+- Branch `main` protegida (todas bloqueantes): **1 revisor** (o autor pode aprovar o próprio PR, como permitido na GS), **work item vinculado obrigatório**, **revisor padrão RM562259** e comentários resolvidos. A `main` só recebe mudanças por PR.
+
+### Azure Pipelines
+
+| Pipeline | Arquivo | Dispara | Etapas |
+|---|---|---|---|
+| **Build (CI)** `zela-ci` | [`azure-pipeline.yml`](azure-pipeline.yml) | merge na `main` (nunca no PR) | JDK 21 → `mvn verify` → testes JUnit (137) → cobertura JaCoCo → artefato **drop** (`.jar` + `scripts/`) |
+| **Release (CD)** `zela-cd` | [`azure-pipeline-cd.yml`](azure-pipeline-cd.yml) | artefato novo da `zela-ci` | baixar o drop → aplicar as variáveis no Web App → deploy do `.jar` no App Service → health check e `/info` (environment `producao`) |
+
+As duas rodam no agente self-hosted `EDUARDO` (pool `Default`). A Release acessa a Azure pela service connection `sc-zela-azure` (workload identity federation, papel de Colaborador só no `rg-zela`).
+
+### Variáveis de ambiente
+
+Nenhuma senha fica no código: a API lê tudo de variáveis de ambiente (`application-prod.yml`).
+
+| Onde | Variáveis |
+|---|---|
+| CI (`azure-pipeline.yml`) | `MAVEN_OPTS`, `MAVEN_ARGS`, `IA_PROVEDOR`, `MENSAGERIA_MODO`, `versaoJava`, `artefato` (a CI não precisa de segredos: testes com H2) |
+| Variable group `zela-secrets` (Release) | `DB_URL`, `DB_USER`, `IA_PROVEDOR`, **`DB_PASSWORD` 🔒**, **`JWT_SECRET` 🔒** |
+| Web App (script de infra) | `SPRING_PROFILES_ACTIVE=prod`, `ZELA_AMBIENTE=azure`, `FOTOS_DIRETORIO`, `CORS_ORIGENS`, `MENSAGERIA_MODO=local`, `AGENDAMENTO_INTERVALO` |
+
+### CRUD em JSON (Categoria e Executor)
+
+Base: `https://app-zela-rm562259.azurewebsites.net` (ou o Swagger). As escritas exigem o papel **GESTOR**.
+
+**1. Login (gestor)** — `POST /auth/login`
+
+```json
+{ "email": "gestor@zela.com", "senha": "123456" }
+```
+
+Resposta `200`: `{ "token": "eyJhbGciOi…", "tipo": "Bearer", "expiraEm": "…", "usuario": { "id": 2, "nome": "Carlos Lima", "papel": "GESTOR" } }`. Nas próximas requisições: cabeçalho `Authorization: Bearer <token>`.
+
+**2. Executor** (tabela `executores`)
+
+| Operação | Requisição | Resposta |
+|---|---|---|
+| Create | `POST /executores` | `201` |
+| Read | `GET /executores/{id}` · `GET /executores` (paginado) | `200` |
+| Update | `PUT /executores/{id}` | `200` |
+| Delete | `DELETE /executores/{id}` | `204` |
+
+```json
+{
+  "nome": "Poda Verde Serviços",
+  "tipo": "EMPRESA",
+  "regiao": "Zona Sul",
+  "contrato": "Contrato 045/2026 — Poda de árvores"
+}
+```
+
+`tipo`: `EQUIPE_PROPRIA`, `EMPRESA` ou `CONCESSIONARIA`. Exemplo de `PUT`:
+
+```json
+{
+  "nome": "Poda Verde Serviços Ltda.",
+  "tipo": "CONCESSIONARIA",
+  "regiao": "Saúde",
+  "contrato": "Contrato 045/2026 — Poda e remoção"
+}
+```
+
+**3. Categoria** (tabela `categorias`; usa o id do executor criado acima)
+
+| Operação | Requisição | Resposta |
+|---|---|---|
+| Create | `POST /categorias` | `201` |
+| Read | `GET /categorias/{id}` · `GET /categorias` | `200` |
+| Update | `PUT /categorias/{id}` | `200` |
+| Delete | `DELETE /categorias/{id}` | `204` |
+
+```json
+{
+  "nome": "Sinalização",
+  "icone": "warning-outline",
+  "executorResponsavelId": 100,
+  "prazoHoras": 72,
+  "emissaoAutomatica": true,
+  "riscoBase": 2
+}
+```
+
+Exemplo de `PUT`:
+
+```json
+{
+  "nome": "Sinalização viária",
+  "icone": "warning-outline",
+  "executorResponsavelId": 100,
+  "prazoHoras": 96,
+  "emissaoAutomatica": false,
+  "riscoBase": 3
+}
+```
+
+Ordem para excluir: primeiro a **categoria**, depois o **executor** (a categoria referencia o executor; excluir um executor em uso devolve `409`).
+
+**4. Conferência direto no banco (SELECT no Azure SQL)**
+
+Portal Azure › banco `zela` › Query editor (login `zelaadmin`), ou SSMS/Azure Data Studio em `sql-zela-rm562259.database.windows.net`:
+
+```sql
+SELECT id, nome, tipo, regiao, contrato FROM executores ORDER BY id DESC;
+SELECT id, nome, icone, executor_responsavel_id, prazo_horas, emissao_automatica, risco_base
+  FROM categorias ORDER BY id DESC;
+```
 
 ---
 

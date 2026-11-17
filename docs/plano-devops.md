@@ -119,10 +119,10 @@ Dev (VS Code/IntelliJ) ──push──► Azure Repos (main protegida, PR + wor
 ## 4. Fases de execução
 
 ### Fase 0 — Azure DevOps e acessos (D0: 10–11/11)
-- [ ] Organização (reaproveitar a da Sprint 4 ou criar nova) e **projeto privado** `Zela` (processo Scrum ou Agile).
-- [ ] Convidar o professor: Organização **Basic**, Projeto **Project Administrators** (slides 16–17).
-- [ ] Pedir paralelismo hospedado (D3) ou preparar o agente self-hosted.
-- [ ] Boards: Epic/Feature/**Task inicial** "Publicar a Zela API na Azure" (os commits desta fase vão linkados a ela).
+- [x] Organização `RM5622590186` (a da Sprint 4) e **projeto privado** `Zela` (Scrum).
+- [ ] ⚠️ Professor `profjoao.menk@fiap.com.br`: já é **Basic** na organização; **falta** incluí-lo em **Project Administrators** do projeto Zela (Project Settings › Permissions). Sem isso: −70.
+- [x] Paralelismo hospedado não liberado; usando o agente self-hosted `EDUARDO`.
+- [x] Boards: Epic #2 › Feature #3 › PBI #4 › Tasks #5 (preparação), #6 (CI), #7 (CD), #8 (documentação).
 
 ### Fase 1 — Preparar a API para o Azure SQL (11–12/11) · *mexe no código Java: alinhar com o chat de Java*
 - [x] `pom.xml`: driver `mssql-jdbc` (runtime) e `flyway-sqlserver`.
@@ -169,30 +169,25 @@ Dev (VS Code/IntelliJ) ──push──► Azure Repos (main protegida, PR + wor
 - [ ] Melhoria (próximo PR): `mergeTestResults: true` para os 137 testes aparecerem em uma única execução na aba Tests (hoje são 19 execuções, uma por classe).
 - ⚠️ **O agente precisa estar rodando** para qualquer build/release: `C:\agent\run.cmd` (deixe a janela aberta, inclusive no vídeo).
 
-### Fase 6 — Pipeline de Release/CD (14–15/11)
-- Service connection Azure Resource Manager (workload identity) com a assinatura.
-- Variable group `zela-secrets`: `DB_URL`, `DB_USER`, `DB_PASSWORD`🔒, `JWT_SECRET`🔒, `GEMINI_API_KEY`🔒 (pode ser ligado ao Key Vault como extra).
-- Disparo automático pelo novo artefato da CI (D2).
-- Etapas/tarefas:
-  1. Download do artefato `drop`
-  2. **AzureWebApp@1** deploy do `.jar` (Linux, Java 21)
-  3. **AzureAppServiceSettings@1** com as variáveis do banco, JWT e IA vindas do variable group
-  4. Smoke test: `curl` em `/actuator/health` (espera `UP`) e `/info` (mostra a versão publicada)
-  5. Echo das URLs (API e Swagger)
-- Usar `environment: producao` (histórico de deploys aparece no Azure DevOps).
+### Fase 6 — Pipeline de Release/CD · `azure-pipeline-cd.yml` ✅ (17/11)
+- [x] Variable group **`zela-secrets`** (id 2): `DB_URL`, `DB_USER`, `IA_PROVEDOR`, `DB_PASSWORD`🔒, `JWT_SECRET`🔒 (segredos enviados do arquivo local, sem aparecer em lugar nenhum).
+- [x] Service connection **`sc-zela-azure`**: workload identity federation, criação automática, papel **Colaborador só no `rg-zela`** (exigiu Proprietário no `rg-zela`, dado pelo Phillipo). Autorizada só para a `zela-cd`.
+- [x] Pipeline **`zela-cd`** (id 5): `resources.pipelines` com `source: zela-ci` (dispara com o artefato novo da `main`), deployment job no environment **`producao`** (id 1). Autorizada na fila `Default`, no variable group e no environment.
+- [x] Etapas: baixar o `drop` → conferir o artefato → **AzureAppServiceSettings** (variáveis do `zela-secrets`) → **AzureWebApp** (deploy do `.jar`, `JAVA|21-java21`) → PowerShell: `/actuator/health` = UP (até 8 min) e `/info`.
+- [x] Histórico: Task **#7** (Done) · PR **#3** → CI **#30 ✅** → CD **#31 ✅** (parou num *Checkpoint.Authorization* do environment novo até autorizar a `zela-cd`). API no ar: health UP, Swagger 200, login OK; Azure SQL com as 9 tabelas e as migrações V1, V2 e V2.1.
+- Branch padrão da `zela-cd` = `main` (o gatilho por artefato lê o YAML da branch padrão).
 
-### Fase 7 — Ensaio ponta a ponta (15/11)
-- [ ] Task nova no Boards → branch `feature/<id>-...` → alteração no **código** (ex.: texto/versão do `GET /info`) → commit com `AB#<id>` → PR com work item → aprovar → merge → CI → CD → conferir na nuvem.
-- [ ] CRUD de **Categoria** e **Executor** pelo Swagger na nuvem + `SELECT` no Azure SQL após cada operação.
-- [ ] App mobile apontando para a API na Azure (opcional, enriquece a apresentação).
+### Fase 7 — Ensaio ponta a ponta
+- O fluxo completo (Task → branch → PR → merge → CI → CD) já rodou 3 vezes (PRs #1, #2 e #3). O roteiro do vídeo repete esse fluxo com uma alteração no código.
+- [ ] CRUD de **Categoria** e **Executor** na nuvem com SELECT: fica para o vídeo (para o banco não ficar com dados de teste).
 
-### Fase 8 — Documentação (16/11)
-- [ ] `docs/arquitetura-devops.drawio` + `.png` com **fluxo numerado e legenda** (10 pts).
-- [ ] README — seção DevOps: solução e conceito, desenho, recursos criados, como rodar os scripts, pipelines (CI/CD), variáveis de ambiente (sem valores), **JSON de CRUD** de Categoria e Executor (login → token → POST/GET/PUT/DELETE), SELECTs de conferência, links (Azure DevOps, API, Swagger).
-- [ ] `docs/roteiro-video-devops.md`.
+### Fase 8 — Documentação ✅ (17/11)
+- [x] `docs/arquitetura-devops.svg` (fonte) + `.png` com **fluxo numerado (0–6) e legenda** (estilos de seta, cores das zonas, 🔒). PNG gerado por `docs/ferramentas/exportar-arquitetura.ps1` (Edge headless).
+- [x] README — seção **DevOps e nuvem (Azure)**: solução e conceito, desenho, passos, recursos, scripts, Boards/Repos, pipelines, variáveis de ambiente, **CRUD em JSON** de Executor e Categoria (login, POST/GET/PUT/DELETE, ordem de exclusão) e SELECTs de conferência. Também: link do deploy no topo, Azure SQL na stack e `azure-pipeline-cd.yml` na estrutura.
+- [x] `docs/roteiro-video-devops.md`: checklist antes de gravar e os 10 passos do vídeo. Alteração simulada: frase nova na descrição do Swagger (`OpenApiConfig.java`), que não quebra testes.
 
 ### Fase 9 — Vídeo (17/11)
-Ver seção 6. Gravar contínuo, 1080p, narrado; subir no YouTube (não listado) e **assistir inteiro** conferindo o checklist.
+Roteiro em `docs/roteiro-video-devops.md` (itens obrigatórios na seção 6). Gravar contínuo, 1080p, narrado; subir no YouTube (não listado) e **assistir inteiro** conferindo o checklist.
 
 ### Fase 10 — PDF e entrega (18/11, folga até 19/11)
 - [ ] PDF `Grupo_rmXXXXX.pdf`: folha de rosto, link da organização Azure DevOps, link do YouTube.
