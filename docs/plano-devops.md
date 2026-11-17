@@ -161,17 +161,13 @@ Dev (VS Code/IntelliJ) ──push──► Azure Repos (main protegida, PR + wor
 - [x] `scripts/azure-devops-policies.sh`: as mesmas políticas como código.
 - ⚠️ **A `main` do Azure agora só recebe mudanças por PR.** Fluxo: branch `feature/<id>-...` → push `azure` → PR com work item → aprovar → merge. Depois: `git pull azure main` e `git push origin main` para manter o GitHub igual. Commits do chat de Java feitos direto na `main` local também precisam entrar no Azure por uma branch + PR.
 
-### Fase 5 — Pipeline de Build/CI (13–14/11) · `azure-pipeline.yml`
-- `trigger: branches: [main]` (excluir `docs/**`, `*.md`), `pr: none`
-- Variáveis: `MAVEN_OPTS`, versão do Java; segredos não são necessários na CI (testes usam H2 e IA simulada)
-- Etapas/tarefas (o professor pontua "etapas, tarefas, testes"):
-  1. Checkout
-  2. `JavaToolInstaller`/JDK 21
-  3. **Maven@4 `verify`** com `publishJUnitResults: true` (`**/surefire-reports/TEST-*.xml`)
-  4. **PublishCodeCoverageResults@2** (JaCoCo `target/site/jacoco/jacoco.xml`)
-  5. (opcional) `docker build -f dockerfiles/Dockerfile` para validar a imagem
-  6. CopyFiles (`zela-api-*.jar` + `scripts/`) → **PublishPipelineArtifact `drop`**
-- Conferir: aba **Tests** com os resultados, aba **Code Coverage**, artefato `drop` publicado.
+### Fase 5 — Pipeline de Build/CI · `azure-pipeline.yml` ✅ (17/11)
+- [x] Pipeline **`zela-ci`** (id 4) no agente self-hosted **EDUARDO** (pool `Default`; a organização não tem paralelismo hospedado). Autorizada a usar a fila `Default`; branch padrão `main`.
+- [x] `trigger: main` (ignora `README.md`, `docs`, `postman`) e `pr: none`. Variáveis de ambiente: `MAVEN_OPTS`, `MAVEN_ARGS`, `IA_PROVEDOR`, `MENSAGERIA_MODO`, `versaoJava`, `artefato`.
+- [x] Etapas: checkout → `JavaToolInstaller` (JDK 21) → `java -version` → **Maven verify** pelo wrapper (`.\mvnw.cmd` no Windows, `./mvnw` no Linux) → **PublishTestResults** (JUnit) → **PublishCodeCoverageResults** (JaCoCo) → CopyFiles (`.jar` e `scripts/`) → **PublishPipelineArtifact `drop`**.
+- [x] Histórico: Task **#6** (Done) · PR **#1** (pipeline) → build **#28 falhou** (`'mvnw.cmd' não é reconhecido`: o agente iniciado pelo terminal do Claude herdou `NoDefaultCurrentDirectoryInExePath=1`) → PR **#2** (caminho explícito) → build **#29 ✅**: 137 testes JUnit passando, cobertura publicada, artefato `drop` com `zela-api-1.0.0.jar` (~99 MB) e `scripts/`.
+- [ ] Melhoria (próximo PR): `mergeTestResults: true` para os 137 testes aparecerem em uma única execução na aba Tests (hoje são 19 execuções, uma por classe).
+- ⚠️ **O agente precisa estar rodando** para qualquer build/release: `C:\agent\run.cmd` (deixe a janela aberta, inclusive no vídeo).
 
 ### Fase 6 — Pipeline de Release/CD (14–15/11)
 - Service connection Azure Resource Manager (workload identity) com a assinatura.
