@@ -83,19 +83,18 @@ Dev (VS Code/IntelliJ) ──push──► Azure Repos (main protegida, PR + wor
                                      │
    ┌─────────────────────────── Azure (rg-zela) ─────────────────────────────┐
    │  App Service Linux B1 (Java 21) ── JDBC ──► Azure SQL Database (Basic)  │
-   │        │  AMQP                                                          │
-   │        └──────────► ACI: RabbitMQ (imagem oficial rabbitmq:4.1)         │
+   │  (MENSAGERIA_MODO=local: eventos → notificações no próprio processo)    │
    └──────────────────────────────────────────────────────────────────────────┘
         ▲ HTTPS/JSON                                 │ HTTPS
    App mobile Expo (Zela)                       Google Gemini (IA)
 ```
 
 **Por que assim**
-- **App Service + Azure SQL** é o mesmo modelo que já funcionou na Sprint 4 (VitalPet): menos peças, deploy de `.jar` direto, HTTPS e domínio prontos, `/home` persistente para as fotos (`FOTOS_DIRETORIO=/home/uploads`).
-- **RabbitMQ em ACI** mantém a mensageria real (requisito de Java) na nuvem, sem Dockerfile próprio (imagem oficial). Plano B: `MENSAGERIA_MODO=local` na nuvem se o ACI der problema de cota.
+- **App Service + Azure SQL** é o mesmo modelo que já funcionou na Sprint 4 (VitalPet): menos peças, deploy de `.jar` direto, HTTPS e domínio prontos, `/home` persistente para as fotos (`FOTOS_DIRETORIO=/home/zela/uploads`).
+- **Sem ACI/ACR (decidido em 17/11):** na nuvem a API usa `MENSAGERIA_MODO=local` (os eventos viram notificações no próprio processo, depois do commit). Nenhuma disciplina exige o RabbitMQ na nuvem: Java cobra a mensageria no código (requisito 05) e ela é demonstrada localmente com `docker compose up` (painel em `localhost:15672`).
 - O `dockerfiles/Dockerfile` continua no repo (roda local com `docker compose`) e pode ser validado na CI (`docker build`) como etapa extra.
 
-**Custo estimado (19/11 → 30/11, ~3 semanas)**: App Service B1 ≈ US$ 10 · Azure SQL Basic ≈ US$ 4 · ACI 0,5 vCPU/1 GB ≈ US$ 15 → **≈ US$ 30** do crédito Azure for Students. Criar alerta de orçamento.
+**Custo estimado (17/11 → 30/11)**: App Service B1 ≈ US$ 6 · Azure SQL Basic ≈ US$ 2,5 → **≈ US$ 10** do crédito da assinatura usada.
 
 ---
 
@@ -103,7 +102,7 @@ Dev (VS Code/IntelliJ) ──push──► Azure Repos (main protegida, PR + wor
 
 | # | Decisão | Recomendação |
 |---|---|---|
-| D1 | Hospedagem | ✅ **Decidido (10/11):** App Service (API) + Azure SQL + ACI (RabbitMQ) |
+| D1 | Hospedagem | ✅ **Decidido:** App Service (API) + Azure SQL. ACI do RabbitMQ removido em 17/11 (`MENSAGERIA_MODO=local` na nuvem) |
 | D2 | Release | **Dois pipelines YAML** (CI `azure-pipeline.yml` + CD `azure-pipeline-cd.yml` disparado pelo artefato da CI), como na Sprint 4. Alternativa: Release **Classic** (aba Releases, gatilho de CD no artefato) |
 | D3 | Agente | Organização sem paralelismo hospedado (`total 0`). Pedir o **free grant** (2–3 dias úteis). Enquanto isso: **agente self-hosted `EDUARDO`** já registrado no pool `Default` (instalado em `C:\agent`, roda com `run.cmd`; precisa estar online nas execuções e no vídeo) |
 | D4 | Professor | `profjoao.menk@fiap.com.br` (slide 17), já Basic na organização `RM5622590186` desde a Sprint 4 |
@@ -112,7 +111,8 @@ Dev (VS Code/IntelliJ) ──push──► Azure Repos (main protegida, PR + wor
 - Organização: `https://dev.azure.com/RM5622590186` · Projeto **Zela** (privado, Scrum)
 - Boards (Sprint 1 = 10/11 → 19/11): Epic **#2** › Feature **#3** › PBI **#4** › Task inicial **#5** "Configurar o projeto e publicar a Zela API na Azure" — usar `AB#5` nos commits da preparação
 | D5 | Grupo | Individual ou grupo? (folha de rosto, RM do revisor padrão, nome do PDF) |
-| D6 | Região | `brazilsouth`; se a policy do Azure for Students bloquear, `eastus2`/`canadacentral` |
+| D6 | Região | ✅ **`brazilsouth`**, permitida na assinatura do Phillipo (eastus, brazilsouth, centralus, mexicocentral, northcentralus). Reserva: `centralus` |
+| D7 | Assinatura | ✅ A própria está `Disabled` desde 10/11. **Usando `2TDSA RM565399 PHILLIPO`**, com você como **Colaborador**. Para a service connection da Fase 6, o Phillipo precisa te dar **Proprietário só no `rg-zela`** |
 
 ---
 
@@ -133,20 +133,21 @@ Dev (VS Code/IntelliJ) ──push──► Azure Repos (main protegida, PR + wor
 - [x] `./mvnw verify` verde só com H2: **135 testes, 0 falhas**.
 
 ### Fase 2 — `scripts/script-bd.sql` (12/11)
-- [ ] DDL completo das 9 tabelas no dialeto SQL Server (mesmo conteúdo do V1 do Flyway) + comentário explicando que o Flyway aplica automaticamente no deploy.
+- [x] `scripts/script-bd.sql` gerado pelo mesmo `h2_para_sqlserver.py` (DDL da V1 + cabeçalho). Testado em banco vazio: 9 tabelas, FKs e CHECKs criados.
 
 ### Fase 3 — Infra via Azure CLI (12–13/11)
-- [ ] `scripts/infra-azure.sh` (Bash, roda no Cloud Shell ou Git Bash), idempotente e com variáveis no topo:
+- [x] Escritos e testados com um `az` simulado (10/11) e **executados em 17/11** na assinatura do Phillipo (brazilsouth); a reexecução não duplica nada.
+- [x] `scripts/infra-azure.sh` (Bash, roda no Cloud Shell ou Git Bash), idempotente e com variáveis no topo:
   - Resource Group `rg-zela`
   - Azure SQL Server + DB `zela` (Basic) + firewall "Allow Azure services" + IP do seu PC (para os SELECTs do vídeo)
-  - App Service Plan Linux **B1** + Web App `app-zela-<rm>` runtime **JAVA:21-java21**, Always On, health check `/actuator/health`
-  - ACI `aci-zela-rabbitmq` (imagem `rabbitmq:4.1-management`, porta 5672, DNS label, usuário/senha por variável)
-  - App settings **não sensíveis** (perfil `prod`, `ZELA_AMBIENTE=azure`, `FOTOS_DIRETORIO=/home/uploads`, `CORS_ORIGENS`, `RABBITMQ_HOST`)
+  - App Service Plan Linux **B1** + Web App `app-zela-<rm>` runtime **JAVA:21-java21**, Always On, HTTPS obrigatório, health check `/actuator/health`
+  - Azure SQL criado com `--collation Latin1_General_100_CI_AS_SC_UTF8`
+  - App settings **não sensíveis** (perfil `prod`, `ZELA_AMBIENTE=azure`, `FOTOS_DIRETORIO=/home/zela/uploads`, `CORS_ORIGENS`, `MENSAGERIA_MODO=local`)
   - Senhas lidas por `read -s` ou variável de ambiente — **nunca** no arquivo
   - Saída final com URLs (API, Swagger, servidor SQL)
-- [ ] `scripts/delete-infra.sh` (`az group delete`) para depois de 30/11.
-- [ ] Rodar o script e conferir os recursos no portal (vai aparecer no vídeo).
-- [ ] Alerta de orçamento na assinatura.
+- [x] `scripts/delete-infra.sh` (`az group delete`, pede o nome do RG para confirmar) para depois de 30/11.
+- [x] Recursos conferidos (17/11): `rg-zela` › `sql-zela-rm562259` + banco `zela` (Basic, UTF-8, Online) · `plan-zela` (B1 Linux) · `app-zela-rm562259` (Java 21, Running, HTTPS, Always On, health check). Conexão do PC ao banco testada com `sqlcmd`.
+- [x] Senhas geradas em `C:\Users\educa\.zela\segredos-azure.env` (fora do Git, acesso só do seu usuário): `SQL_ADMIN_PASSWORD` e `JWT_SECRET`, para o variable group.
 
 ### Fase 4 — Azure Repos e políticas (13/11)
 - [ ] Varredura de segredos antes de subir (`.env` fora do Git, nada de chave/senha no histórico).
@@ -172,12 +173,12 @@ Dev (VS Code/IntelliJ) ──push──► Azure Repos (main protegida, PR + wor
 
 ### Fase 6 — Pipeline de Release/CD (14–15/11)
 - Service connection Azure Resource Manager (workload identity) com a assinatura.
-- Variable group `zela-secrets`: `DB_URL`, `DB_USER`, `DB_PASSWORD`🔒, `JWT_SECRET`🔒, `GEMINI_API_KEY`🔒, `RABBITMQ_USER`, `RABBITMQ_PASSWORD`🔒 (pode ser ligado ao Key Vault como extra).
+- Variable group `zela-secrets`: `DB_URL`, `DB_USER`, `DB_PASSWORD`🔒, `JWT_SECRET`🔒, `GEMINI_API_KEY`🔒 (pode ser ligado ao Key Vault como extra).
 - Disparo automático pelo novo artefato da CI (D2).
 - Etapas/tarefas:
   1. Download do artefato `drop`
   2. **AzureWebApp@1** deploy do `.jar` (Linux, Java 21)
-  3. **AzureAppServiceSettings@1** com as variáveis do banco, JWT, RabbitMQ e IA vindas do variable group
+  3. **AzureAppServiceSettings@1** com as variáveis do banco, JWT e IA vindas do variable group
   4. Smoke test: `curl` em `/actuator/health` (espera `UP`) e `/info` (mostra a versão publicada)
   5. Echo das URLs (API e Swagger)
 - Usar `environment: producao` (histórico de deploys aparece no Azure DevOps).
@@ -201,7 +202,7 @@ Ver seção 6. Gravar contínuo, 1080p, narrado; subir no YouTube (não listado)
 - [ ] Entregar no portal até 19/11 23h55.
 
 ### Pós-entrega (23–30/11)
-- Manter API, banco e RabbitMQ no ar; ensaiar a apresentação (app rodando, arquitetura, perguntas sobre Boards/Repos/Pipelines).
+- Manter API e banco no ar; ensaiar a apresentação (app rodando, arquitetura, perguntas sobre Boards/Repos/Pipelines).
 - Depois da correção: `scripts/delete-infra.sh`.
 
 ---
@@ -214,7 +215,7 @@ GS2-Java/
 ├── azure-pipeline-cd.yml         # CD (se D2 = YAML)
 ├── dockerfiles/Dockerfile        # já existe
 ├── scripts/
-│   ├── infra-azure.sh            # Azure CLI: RG, SQL, App Service, ACI
+│   ├── infra-azure.sh            # Azure CLI: RG, SQL, App Service
 │   ├── delete-infra.sh
 │   ├── script-bd.sql             # DDL SQL Server
 │   └── azure-devops-policies.sh  # opcional
@@ -231,7 +232,7 @@ GS2-Java/
 ## 6. Roteiro do vídeo (itens obrigatórios, −20 por item faltando)
 
 1. README: solução, conceito e **desenho da arquitetura**.
-2. Portal Azure: recursos criados pelo script (RG, SQL, App Service, ACI).
+2. Portal Azure: recursos criados pelo script (RG, Azure SQL, App Service Plan, Web App).
 3. Azure Boards: **criar uma nova tarefa**.
 4. **Criar branch nova** e alterar o **código-fonte** (não o README).
 5. Commit vinculado, **PR** com work item, aprovação, **merge na main**.
