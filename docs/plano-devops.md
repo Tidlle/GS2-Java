@@ -150,14 +150,16 @@ Dev (VS Code/IntelliJ) ──push──► Azure Repos (main protegida, PR + wor
 - [x] Senhas geradas em `C:\Users\educa\.zela\segredos-azure.env` (fora do Git, acesso só do seu usuário): `SQL_ADMIN_PASSWORD` e `JWT_SECRET`, para o variable group.
 
 ### Fase 4 — Azure Repos e políticas (13/11)
-- [ ] Varredura de segredos antes de subir (`.env` fora do Git, nada de chave/senha no histórico).
-- [ ] Importar o repo: `git remote add azure <url-azure-repos>` e `git push azure main` (GitHub `origin` continua para Java/Mobile).
-- [ ] Branch policies na `main`:
-  - Minimum number of reviewers = **1** + **Allow requestors to approve their own changes**
+- [x] Varredura de segredos (17/11): 57 commits, nenhum `.env`, chave ou senha real no histórico.
+- [x] Repo enviado (17/11): remote `azure` = `https://dev.azure.com/RM5622590186/Zela/_git/Zela`, branch padrão `main`. Os 5 commits com `AB#5` ficaram vinculados à Task #5 ("Fixed in Commit").
+- [x] Branch policies na `main` (todas bloqueantes):
+  - Minimum number of reviewers = **1**, autor pode aprovar o próprio PR (`creatorVoteCounts`)
   - **Check for linked work items = Required**
-  - **Automatically included reviewers** = você (RM)
+  - **Required reviewers** = RM562259 (revisor padrão, incluído automaticamente; voto do autor conta)
+  - **Check for comment resolution**
   - (sem build validation: o build deve rodar só após o merge)
-- [ ] Opcional: `scripts/azure-devops-policies.sh` com `az repos policy ...` para documentar as políticas como código.
+- [x] `scripts/azure-devops-policies.sh`: as mesmas políticas como código.
+- ⚠️ **A `main` do Azure agora só recebe mudanças por PR.** Fluxo: branch `feature/<id>-...` → push `azure` → PR com work item → aprovar → merge. Depois: `git pull azure main` e `git push origin main` para manter o GitHub igual. Commits do chat de Java feitos direto na `main` local também precisam entrar no Azure por uma branch + PR.
 
 ### Fase 5 — Pipeline de Build/CI (13–14/11) · `azure-pipeline.yml`
 - `trigger: branches: [main]` (excluir `docs/**`, `*.md`), `pr: none`
