@@ -1,4 +1,4 @@
-"""Gera as migrações do SQL Server (Azure SQL) a partir das migrações do H2.
+"""Gera as migrações do SQL Server (Azure SQL) e o scripts/script-bd.sql a partir das migrações do H2.
 
 As migrações do H2 são a fonte; as do SQL Server são geradas por este script para as duas
 versões nunca saírem de sincronia. Rode da raiz do repositório depois de mudar qualquer .sql do H2:
@@ -133,6 +133,29 @@ def converter(sql):
     return "".join(saida)
 
 
+SCRIPT_BD = RAIZ / "scripts" / "script-bd.sql"
+CABECALHO_SCRIPT_BD = """\
+-- =====================================================================================
+-- Zela API · script-bd.sql · DDL dos objetos do banco (Azure SQL Database / SQL Server)
+-- =====================================================================================
+-- GERADO por docs/ferramentas/h2_para_sqlserver.py a partir de db/migration/h2/V1__schema.sql.
+-- Não edite à mão.
+--
+-- Banco: Azure SQL Database "zela", criado por scripts/infra-azure.sh com a collation
+--        Latin1_General_100_CI_AS_SC_UTF8 (UTF-8: textos com acentos em colunas VARCHAR).
+--
+-- No deploy, a API aplica este mesmo DDL sozinha com o Flyway
+-- (src/main/resources/db/migration/sqlserver/V1__schema.sql) e em seguida os dados iniciais (V2).
+-- Este arquivo serve para documentar o modelo e para criar as tabelas manualmente, se preciso
+-- (Portal Azure > banco zela > Query editor, ou SSMS/Azure Data Studio).
+--
+-- Tabelas (9): executores, categorias, usuarios, ocorrencias, confirmacoes, ordens_servico,
+--              eventos_os, avaliacoes, notificacoes
+-- =====================================================================================
+
+"""
+
+
 def main():
     for origem, destino in ARQUIVOS:
         texto = (RECURSOS / origem).read_text(encoding="utf-8")
@@ -140,6 +163,12 @@ def main():
         alvo.parent.mkdir(parents=True, exist_ok=True)
         alvo.write_text(AVISO.format(origem=f"db/{origem}") + converter(texto), encoding="utf-8", newline="\n")
         print(f"db/{destino}")
+
+    # scripts/script-bd.sql (exigido pela disciplina de DevOps): o mesmo DDL da V1.
+    ddl = converter((RECURSOS / ARQUIVOS[0][0]).read_text(encoding="utf-8"))
+    SCRIPT_BD.parent.mkdir(parents=True, exist_ok=True)
+    SCRIPT_BD.write_text(CABECALHO_SCRIPT_BD + ddl, encoding="utf-8", newline="\n")
+    print("scripts/script-bd.sql")
 
 
 if __name__ == "__main__":
