@@ -1,0 +1,101 @@
+# =====================================================================================
+# Zela API · Pipeline de Build (CI) · Azure Pipelines
+# =====================================================================================
+# Roda automaticamente a cada merge na main (a main só recebe mudanças por Pull Request).
+# Etapas: compila, roda os testes automáticos (JUnit 5 + MockMvc), publica os resultados dos
+# testes e a cobertura (JaCoCo) e publica o artefato "drop" (o .jar e os scripts), que dispara
+# a pipeline de Release (azure-pipeline-cd.yml).
+# =====================================================================================
+
+name: $(Date:yyyyMMdd)$(Rev:.r)
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    exclude:            # mudanças só de documentação não geram build
+      - README.md
+      - docs
+      - postman
+
+pr: none                # o build roda só depois do merge, nunca no PR
+
+# Agente self-hosted da organização (pool Default). Para usar os agentes da Microsoft,
+# troque por:  pool: { vmImage: ubuntu-latest }  (as etapas funcionam nos dois sistemas).
+pool:
+  name: Default
+
+variables:
+  # Variáveis de ambiente usadas pelo Maven e pelos testes (nenhum segredo é necessário na CI:
+  # os testes usam H2 em memória, IA simulada e mensageria local).
+  MAVEN_OPTS: '-Xmx1024m'
+  MAVEN_ARGS: '--batch-mode --no-transfer-progress'
+  IA_PROVEDOR: 'none'
+  MENSAGERIA_MODO: 'local'
+  versaoJava: '21'
+  artefato: 'drop'
+
+stages:
+  - stage: Build
+    displayName: 'CI · Build, testes e artefato'
+    jobs:
+      - job: BuildTestes
+        displayName: 'Compilar, testar e empacotar a Zela API'
+        steps:
+          - checkout: self
+            displayName: 'Baixar o código do Azure Repos'
+
+          - task: JavaToolInstaller@0
+            displayName: 'Configurar o JDK $(versaoJava)'
+            inputs:
+              versionSpec: '$(versaoJava)'
+              jdkArchitectureOption: 'x64'
+              jdkSourceOption: 'PreInstalled'
+
+          - script: java -version
+            displayName: 'Conferir a versão do Java'
+
+          - script: ./mvnw clean verify
+            displayName: 'Maven verify: compilar, rodar os testes e gerar o .jar (Linux)'
+            condition: and(succeeded(), ne(variables['Agent.OS'], 'Windows_NT'))
+
+          - script: mvnw.cmd clean verify
+            displayName: 'Maven verify: compilar, rodar os testes e gerar o .jar (Windows)'
+            condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
+
+          - task: PublishTestResults@2
+            displayName: 'Publicar os resultados dos testes (JUnit)'
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/surefire-reports/TEST-*.xml'
+              testRunTitle: 'Zela API · testes automáticos (JUnit)'
+              failTaskOnFailedTests: true
+
+          - task: PublishCodeCoverageResults@2
+            displayName: 'Publicar a cobertura de testes (JaCoCo)'
+            condition: succeededOrFailed()
+            inputs:
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/target/site/jacoco/jacoco.xml'
+
+          - task: CopyFiles@2
+            displayName: 'Separar o pacote (.jar) para o artefato'
+            inputs:
+              SourceFolder: '$(System.DefaultWorkingDirectory)/target'
+              Contents: 'zela-api-*.jar'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+          - task: CopyFiles@2
+            displayName: 'Separar os scripts (Azure CLI e script-bd.sql) para o artefato'
+            inputs:
+              SourceFolder: '$(System.DefaultWorkingDirectory)/scripts'
+              Contents: '**'
+              TargetFolder: '$(Build.ArtifactStagingDirectory)/scripts'
+
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publicar o artefato "drop"'
+            inputs:
+              targetPath: '$(Build.ArtifactStagingDirectory)'
+              artifact: '$(artefato)'
+              publishLocation: 'pipeline'
