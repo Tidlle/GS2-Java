@@ -31,6 +31,8 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev
       RABBITMQ_HOST: rabbitmq
+      # Sobrepõe o .env: o compose existe para usar o broker de verdade.
+      MENSAGERIA_MODO: rabbitmq
       FOTOS_DIRETORIO: /app/uploads
     volumes:
       # As fotos sobrevivem a reinícios do container.

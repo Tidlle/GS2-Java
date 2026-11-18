@@ -332,6 +332,17 @@ Cada mudança de status de uma OS ou de uma ocorrência vira um **evento** publi
 
 **Ver funcionando:** com `docker compose up`, abra o painel em http://localhost:15672 (`guest`/`guest`), aba *Exchanges* → `zela.eventos` e aba *Queues* → `zela.notificacoes`. Faça uma ação no Swagger (ex.: reportar algo urgente) e veja a mensagem passar e o aviso aparecer em `GET /notificacoes`.
 
+**Testado com o broker real** (RabbitMQ 4.1 no Docker, 18/11/2026):
+
+| Teste | Resultado |
+|---|---|
+| Ocorrência urgente reportada | 1 mensagem em `zela.alertas` e 2 em `zela.notificacoes`, todas confirmadas (ack), DLQs vazias |
+| Mensagem inválida no exchange | 3 tentativas com espera crescente (1 s, 2 s) e depois vai para `zela.notificacoes.dlq`, sem travar a fila |
+| Broker parado | A API segue no ar e a ocorrência é gravada (201); o evento daquele momento não é publicado depois (não há tabela de eventos pendentes) |
+| Broker religado | Os consumidores reconectam sozinhos e os novos eventos voltam a ser processados |
+
+O `docker-compose.yml` força `MENSAGERIA_MODO=rabbitmq` no container, mesmo que o `.env` tenha `local`. Na nuvem (Azure) a API roda com `MENSAGERIA_MODO=local`: não há broker lá.
+
 **Modo local** (`MENSAGERIA_MODO=local`): mesmos eventos e mesmas regras, processados no mesmo processo. Usado nos testes automatizados (o CI roda sem broker) e para rodar sem Docker.
 
 ## Erros
