@@ -61,7 +61,7 @@
 
 ## Pendências conhecidas
 
-- Testar a comparação antes/depois no caso "resolvido" com foto real do reparo (a triagem e os casos "não resolvido" já foram testados com o Gemini).
+- Comparação antes/depois no caso "resolvido": testada em 18/11/2026 com o Gemini (par montado a partir de uma foto real: sacos de lixo na calçada e o mesmo local sem eles). Resultado: resolvido, confiança 1,0, e o caso de controle (fotos idênticas) deu não resolvido, confiança 0. Falta só um par de fotos tiradas em campo.
 - RabbitMQ real (Docker): testado em 18/11/2026 (eventos, retentativas, DLQ, queda e volta do broker; resultado no README, "Mensageria"). Falta só tirar prints do painel.
 - Criar as migrações e o `scripts/script-bd.sql` do banco da nuvem, quando o chat de DevOps definir o banco.
 - Fase 10 (app Mobile): revisitar GPS real, URL da nuvem, teste no celular e commits do app.

@@ -1,7 +1,7 @@
 # Zela API — zeladoria colaborativa com IA
 
 > Global Solution 2026/2 · **CitizenTech** · FIAP · 2º ano ADS · disciplina **Java Advanced**
-> Repositório: https://github.com/Tidlle/GS2-Java · Deploy (Azure): https://app-zela-rm562259.azurewebsites.net/swagger-ui.html · Vídeo pitch: _[link]_
+> Repositório: https://github.com/Tidlle/GS2-Java · Deploy (Azure): https://app-zela-rm562259.azurewebsites.net/swagger-ui.html · Vídeo pitch: https://www.youtube.com/watch?v=3adCKNu-mI8
 
 | RM | Nome | Turma |
 |---|---|---|
