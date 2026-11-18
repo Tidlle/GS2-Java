@@ -594,29 +594,8 @@ SELECT id, nome, icone, executor_responsavel_id, prazo_horas, emissao_automatica
 
 ---
 
-## Requisitos de Java
-
-A conferência item a item (requisitos, descontos, segurança e roteiro da apresentação) está em [`docs/requisitos-java.md`](docs/requisitos-java.md).
-
-## Andamento
-
-- [x] Fase 1 — esqueleto do projeto, perfis, Swagger, health check, Docker
-- [x] Fase 2 — domínio e banco (H2; migrações do banco da nuvem quando o DevOps definir)
-- [x] Fase 3 — segurança JWT, tratamento de erros e CRUD de categorias e executores
-- [x] Fase 4 — ocorrências, confirmação dos vizinhos e fila de exceções
-- [x] Fase 5 — ciclo da ordem de serviço (executor, gestor, cidadão e supervisor)
-- [x] Fase 6 — fotos e Spring AI (Gemini) com triagem e comparação antes/depois
-- [x] Fase 7 — RabbitMQ: eventos após o commit, filas de notificações e alertas, DLQ
-- [x] Fase 8 — prazos automáticos (24 h, escalonamento, aceite tácito) e indicadores
-- [x] Fase 9 — revisão dos requisitos e de segurança, cobertura de testes e coleção Postman
-- [x] Fase 10 — integração com o app mobile (primeira versão; será revisitada)
-- [ ] Fase 11 — documentação e entrega
-
----
-
 ## Declaração de uso de IA
 
 | Ferramenta | Para quê |
 |---|---|
-| Claude Code (Anthropic) | Apoio no desenvolvimento: planejamento, código, testes e documentação, revisados e testados pelo grupo. |
 | Google Gemini | Funcionalidade da solução: triagem da foto e comparação antes/depois (via Spring AI). |
